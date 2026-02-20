@@ -52,9 +52,10 @@ export default function AttendancePage() {
       return;
     }
 
-    // Expected format: attendance:event_id:user_id
+    // Secure UUID Format: attendance:[registration_id]
+    // Legacy/Manual Format fallback: attendance:event_id:user_id
     const parts = decodedText.split(':');
-    if (parts[0] !== 'attendance' || parts.length < 3) {
+    if (parts[0] !== 'attendance' || parts.length < 2) {
       toast({
         title: "Invalid QR Code",
         description: "This is not a valid attendance QR code.",
@@ -63,30 +64,42 @@ export default function AttendancePage() {
       return;
     }
 
-    const [_, eventId, userId] = parts;
-
-    if (eventId !== selectedEvent) {
-      toast({
-        title: "Wrong Event",
-        description: "This ticket is for a different event.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      // Check if registration exists
-      const { data: registration, error: fetchError } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('event_id', eventId)
-        .eq('user_id', userId)
-        .single();
+      let registrationId = '';
+      let isUuidFormat = false;
+
+      if (parts.length === 2) {
+        // New secure format
+        registrationId = parts[1];
+        isUuidFormat = true;
+      } else if (parts.length === 3) {
+        // Legacy format: attendance:event_id:user_id
+        const [_, eventId, userId] = parts;
+        if (eventId !== selectedEvent) {
+          toast({
+            title: "Wrong Event",
+            description: "This ticket is for a different event.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // 1. Fetch registration
+      let query = supabase.from('registrations').select('*');
+
+      if (isUuidFormat) {
+        query = query.eq('id', registrationId);
+      } else {
+        query = query.eq('event_id', parts[1]).eq('user_id', parts[2]);
+      }
+
+      const { data: registration, error: fetchError } = await query.single();
 
       if (fetchError || !registration) {
         toast({
           title: "Not Registered",
-          description: "This student is not registered for this event.",
+          description: "This ticket is invalid or not registered for this event.",
           variant: "destructive",
         });
         setRecentScans(prev => [
@@ -96,25 +109,36 @@ export default function AttendancePage() {
         return;
       }
 
-      // Fetch profile data separately since the join isn't working via types
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('user_id', userId)
-        .single();
-
-      const studentName = profile?.name || 'Student';
-
-      if (registration.attended) {
+      // 2. Validate event match for UUID format
+      if (isUuidFormat && registration.event_id !== selectedEvent) {
         toast({
-          title: "Already Attended",
-          description: `${studentName} has already been checked in.`,
+          title: "Wrong Event",
+          description: "This ticket is for a different event.",
           variant: "destructive",
         });
         return;
       }
 
-      // Mark attendance
+      // 3. Check if already attended
+      if (registration.attended) {
+        toast({
+          title: "Already Attended",
+          description: "Attendee has already been checked in.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 4. Fetch profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', registration.user_id)
+        .single();
+
+      const studentName = profile?.name || 'Student';
+
+      // 5. Mark attendance
       const { error: updateError } = await supabase
         .from('registrations')
         .update({

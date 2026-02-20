@@ -48,7 +48,8 @@ export default function EventDetailPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(id || '');
-  const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(id || '');
+  const { data: registration, isLoading: isCheckingRegistration } = useIsRegistered(id || '');
+  const isRegistered = !!registration;
   const registerMutation = useRegisterForEvent();
   const cancelMutation = useCancelRegistration();
   const [showQRModal, setShowQRModal] = useState(false);
@@ -331,7 +332,7 @@ export default function EventDetailPage() {
             <div className="flex flex-col items-center p-6">
               <div className="bg-white p-6 rounded-2xl shadow-lg mb-4">
                 <QRCodeSVG
-                  value={`attendance:${event.id}:${user?.id}`}
+                  value={`attendance:${registration?.id}`}
                   size={200}
                   level="H"
                   includeMargin

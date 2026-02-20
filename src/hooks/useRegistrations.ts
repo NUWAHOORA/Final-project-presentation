@@ -1,40 +1,40 @@
- import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
- import { supabase } from '@/integrations/supabase/client';
- import { useAuth } from '@/contexts/AuthContext';
- import { useToast } from '@/hooks/use-toast';
- 
- export interface Registration {
-   id: string;
-   event_id: string;
-   user_id: string;
-   registered_at: string;
-   attended: boolean;
-   attended_at: string | null;
-   // Joined fields
-   event?: {
-     id: string;
-     title: string;
-     date: string;
-     time: string;
-     venue: string;
-     category: string;
-     status: string;
-     image_url: string | null;
-   };
- }
- 
- // Get current user's registrations
- export function useMyRegistrations() {
-   const { user } = useAuth();
-   
-   return useQuery({
-     queryKey: ['my-registrations', user?.id],
-     queryFn: async () => {
-       if (!user) return [];
-       
-       const { data, error } = await supabase
-         .from('registrations')
-         .select(`
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Registration {
+  id: string;
+  event_id: string;
+  user_id: string;
+  registered_at: string;
+  attended: boolean;
+  attended_at: string | null;
+  // Joined fields
+  event?: {
+    id: string;
+    title: string;
+    date: string;
+    time: string;
+    venue: string;
+    category: string;
+    status: string;
+    image_url: string | null;
+  };
+}
+
+// Get current user's registrations
+export function useMyRegistrations() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['my-registrations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('registrations')
+        .select(`
            *,
            event:events (
              id,
@@ -47,78 +47,78 @@
              image_url
            )
          `)
-         .eq('user_id', user.id)
-         .order('registered_at', { ascending: false });
- 
-       if (error) throw error;
-       return data as Registration[];
-     },
-     enabled: !!user,
-   });
- }
- 
- // Check if user is registered for a specific event
- export function useIsRegistered(eventId: string) {
-   const { user } = useAuth();
-   
-   return useQuery({
-     queryKey: ['registration', eventId, user?.id],
-     queryFn: async () => {
-       if (!user) return false;
-       
-       const { data, error } = await supabase
-         .from('registrations')
-         .select('id')
-         .eq('event_id', eventId)
-         .eq('user_id', user.id)
-         .maybeSingle();
- 
-       if (error) throw error;
-       return !!data;
-     },
-     enabled: !!user && !!eventId,
-   });
- }
- 
- // Get all registrations for an event (for admins/organizers)
- export function useEventRegistrations(eventId: string) {
-   return useQuery({
-     queryKey: ['event-registrations', eventId],
-     queryFn: async () => {
-       const { data: registrations, error } = await supabase
-         .from('registrations')
-         .select('*')
-         .eq('event_id', eventId)
-         .order('registered_at', { ascending: false });
- 
-       if (error) throw error;
-       
-       // Get user profiles for registrations
-       const userIds = registrations?.map(r => r.user_id) || [];
-       if (userIds.length === 0) return [];
-       
-       const { data: profiles } = await supabase
-         .from('profiles')
-         .select('user_id, name, email, department')
-         .in('user_id', userIds);
- 
-       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
- 
-       return registrations?.map(reg => ({
-         ...reg,
-         user: profileMap.get(reg.user_id)
-       })) || [];
-     },
-     enabled: !!eventId,
-   });
- }
- 
- // Register for an event
- export function useRegisterForEvent() {
-   const queryClient = useQueryClient();
-   const { user } = useAuth();
-   const { toast } = useToast();
- 
+        .eq('user_id', user.id)
+        .order('registered_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Registration[];
+    },
+    enabled: !!user,
+  });
+}
+
+// Check if user is registered for a specific event
+export function useIsRegistered(eventId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['registration', eventId, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as Registration | null;
+    },
+    enabled: !!user && !!eventId,
+  });
+}
+
+// Get all registrations for an event (for admins/organizers)
+export function useEventRegistrations(eventId: string) {
+  return useQuery({
+    queryKey: ['event-registrations', eventId],
+    queryFn: async () => {
+      const { data: registrations, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('registered_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get user profiles for registrations
+      const userIds = registrations?.map(r => r.user_id) || [];
+      if (userIds.length === 0) return [];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, department')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      return registrations?.map(reg => ({
+        ...reg,
+        user: profileMap.get(reg.user_id)
+      })) || [];
+    },
+    enabled: !!eventId,
+  });
+}
+
+// Register for an event
+export function useRegisterForEvent() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   return useMutation({
     mutationFn: async (eventId: string) => {
       if (!user) throw new Error('Not authenticated');
@@ -167,85 +167,85 @@
         description: 'You have been registered for this event. A confirmation email has been sent.',
       });
     },
-     onError: (error: Error) => {
-       toast({
-         title: 'Registration failed',
-         description: error.message,
-         variant: 'destructive',
-       });
-     },
-   });
- }
- 
- // Cancel registration
- export function useCancelRegistration() {
-   const queryClient = useQueryClient();
-   const { user } = useAuth();
-   const { toast } = useToast();
- 
-   return useMutation({
-     mutationFn: async (eventId: string) => {
-       if (!user) throw new Error('Not authenticated');
- 
-       const { error } = await supabase
-         .from('registrations')
-         .delete()
-         .eq('event_id', eventId)
-         .eq('user_id', user.id);
- 
-       if (error) throw error;
-     },
-     onSuccess: (_, eventId) => {
-       queryClient.invalidateQueries({ queryKey: ['registration', eventId] });
-       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-       queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] });
-       queryClient.invalidateQueries({ queryKey: ['events'] });
-       toast({
-         title: 'Registration cancelled',
-         description: 'You have been unregistered from this event.',
-       });
-     },
-     onError: (error: Error) => {
-       toast({
-         title: 'Cancellation failed',
-         description: error.message,
-         variant: 'destructive',
-       });
-     },
-   });
- }
- 
- // Mark attendance (for admins/organizers)
- export function useMarkAttendance() {
-   const queryClient = useQueryClient();
-   const { toast } = useToast();
- 
-   return useMutation({
-     mutationFn: async ({ registrationId, attended }: { registrationId: string; attended: boolean }) => {
-       const { error } = await supabase
-         .from('registrations')
-         .update({ 
-           attended, 
-           attended_at: attended ? new Date().toISOString() : null 
-         })
-         .eq('id', registrationId);
- 
-       if (error) throw error;
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['event-registrations'] });
-       queryClient.invalidateQueries({ queryKey: ['events'] });
-       toast({
-         title: 'Attendance updated',
-         description: 'The attendance has been recorded.',
-       });
-     },
-     onError: (error: Error) => {
-       toast({
-         title: 'Update failed',
-         description: error.message,
-         variant: 'destructive',
-       });
-     },
-   });
- }
+    onError: (error: Error) => {
+      toast({
+        title: 'Registration failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Cancel registration
+export function useCancelRegistration() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (eventId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('registrations')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, eventId) => {
+      queryClient.invalidateQueries({ queryKey: ['registration', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Registration cancelled',
+        description: 'You have been unregistered from this event.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Cancellation failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Mark attendance (for admins/organizers)
+export function useMarkAttendance() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ registrationId, attended }: { registrationId: string; attended: boolean }) => {
+      const { error } = await supabase
+        .from('registrations')
+        .update({
+          attended,
+          attended_at: attended ? new Date().toISOString() : null
+        })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event-registrations'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Attendance updated',
+        description: 'The attendance has been recorded.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Update failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
