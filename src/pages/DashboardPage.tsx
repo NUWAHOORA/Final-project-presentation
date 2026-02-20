@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import {
   Calendar,
   Users,
-  TrendingUp,
   Clock,
   CheckCircle,
   ArrowRight,
@@ -30,8 +29,7 @@ export default function DashboardPage() {
   // Calculate analytics from real data
   const totalEvents = events?.length || 0;
   const totalRegistrations = events?.reduce((sum, e) => sum + e.registered_count, 0) || 0;
-  const totalAttendance = events?.reduce((sum, e) => sum + e.attended_count, 0) || 0;
-  const attendanceRate = totalRegistrations > 0 ? ((totalAttendance / totalRegistrations) * 100).toFixed(1) : '0';
+
 
 
 
@@ -97,13 +95,7 @@ export default function DashboardPage() {
             variant="success"
             delay={0.1}
           />
-          <StatCard
-            title="Attendance Rate"
-            value={`${attendanceRate}%`}
-            icon={TrendingUp}
-            variant="accent"
-            delay={0.2}
-          />
+
           <StatCard
             title="Pending Approvals"
             value={pendingEvents.length}
