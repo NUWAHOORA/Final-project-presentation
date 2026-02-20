@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -6,7 +7,8 @@ import {
   CheckCircle,
   ArrowRight,
   Sparkles,
-  Loader2
+  Loader2,
+  Download,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -15,12 +17,13 @@ import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
-
+import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
 
 export default function DashboardPage() {
   const { profile, role } = useAuth();
   const { data: events, isLoading } = useEvents();
   const updateStatusMutation = useUpdateEventStatus();
+  const [reportOpen, setReportOpen] = useState(false);
 
   const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
@@ -29,9 +32,6 @@ export default function DashboardPage() {
   // Calculate analytics from real data
   const totalEvents = events?.length || 0;
   const totalRegistrations = events?.reduce((sum, e) => sum + e.registered_count, 0) || 0;
-
-
-
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -61,22 +61,45 @@ export default function DashboardPage() {
             <Sparkles className="w-5 h-5" />
             <span className="text-sm font-medium">{greeting()}</span>
           </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl font-bold"
-          >
-            Welcome back, {profile?.name?.split(' ')[0] || 'User'}!
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-muted-foreground mt-1"
-          >
-            Here's what's happening with your events today.
-          </motion.p>
+
+          {/* Title row — Download Report button lives here (admin only) */}
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <motion.h1
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-3xl font-bold"
+              >
+                Welcome back, {profile?.name?.split(' ')[0] || 'User'}!
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-muted-foreground mt-1"
+              >
+                Here's what's happening with your events today.
+              </motion.p>
+            </div>
+
+            {/* Admin-only Download Report button */}
+            {role === 'admin' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Button
+                  onClick={() => setReportOpen(true)}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-md"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Report
+                </Button>
+              </motion.div>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -95,7 +118,6 @@ export default function DashboardPage() {
             variant="success"
             delay={0.1}
           />
-
           <StatCard
             title="Pending Approvals"
             value={pendingEvents.length}
@@ -104,8 +126,6 @@ export default function DashboardPage() {
             delay={0.3}
           />
         </div>
-
-
 
         {/* Quick Actions & Pending */}
         {role === 'admin' && pendingEvents.length > 0 && (
@@ -210,6 +230,15 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Report Download Dialog — admin only, rendered at page level */}
+      {role === 'admin' && (
+        <ReportDownloadDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          events={events || []}
+        />
+      )}
     </MainLayout>
   );
 }
