@@ -1,14 +1,14 @@
- import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  ArrowLeft, 
-  Share2, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  ArrowLeft,
+  Share2,
   Heart,
   CheckCircle,
   User,
@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
- import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -48,9 +48,9 @@ export default function EventDetailPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(id || '');
-   const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(id || '');
-   const registerMutation = useRegisterForEvent();
-   const cancelMutation = useCancelRegistration();
+  const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(id || '');
+  const registerMutation = useRegisterForEvent();
+  const cancelMutation = useCancelRegistration();
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -83,15 +83,15 @@ export default function EventDetailPage() {
   const canEdit = isOwner || role === 'admin';
 
   const handleRegister = () => {
-     if (event) {
-       registerMutation.mutate(event.id);
-     }
+    if (event) {
+      registerMutation.mutate(event.id);
+    }
   };
 
   const handleUnregister = () => {
-     if (event) {
-       cancelMutation.mutate(event.id);
-     }
+    if (event) {
+      cancelMutation.mutate(event.id);
+    }
   };
 
   return (
@@ -224,7 +224,7 @@ export default function EventDetailPage() {
               </div>
 
               <div className="w-full bg-muted rounded-full h-2 mb-4">
-                <div 
+                <div
                   className={cn(
                     "h-2 rounded-full transition-all",
                     isAlmostFull ? "bg-warning" : "bg-primary"
@@ -239,44 +239,44 @@ export default function EventDetailPage() {
 
               {role === 'student' && event.status === 'approved' && (
                 <>
-                   {isCheckingRegistration ? (
-                     <Button className="w-full" disabled>
-                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                       Checking...
-                     </Button>
-                   ) : isRegistered ? (
+                  {isCheckingRegistration ? (
+                    <Button className="w-full" disabled>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Checking...
+                    </Button>
+                  ) : isRegistered ? (
                     <div className="space-y-3">
-                      <Button 
+                      <Button
                         className="w-full gradient-success text-white"
                         onClick={() => setShowQRModal(true)}
                       >
                         <Ticket className="w-4 h-4 mr-2" />
                         View My Ticket
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-destructive text-destructive hover:bg-destructive/10"
                         onClick={handleUnregister}
-                         disabled={cancelMutation.isPending}
+                        disabled={cancelMutation.isPending}
                       >
-                         {cancelMutation.isPending ? (
-                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                         ) : null}
-                         {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Registration'}
+                        {cancelMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : null}
+                        {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Registration'}
                       </Button>
                     </div>
                   ) : (
-                    <Button 
+                    <Button
                       className="w-full gradient-primary text-white"
                       onClick={handleRegister}
-                       disabled={spotsLeft <= 0 || registerMutation.isPending}
+                      disabled={spotsLeft <= 0 || registerMutation.isPending}
                     >
-                       {registerMutation.isPending ? (
-                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                       ) : (
-                         <CheckCircle className="w-4 h-4 mr-2" />
-                       )}
-                       {registerMutation.isPending ? 'Registering...' : spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
+                      {registerMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      {registerMutation.isPending ? 'Registering...' : spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
                     </Button>
                   )}
                 </>
@@ -307,8 +307,8 @@ export default function EventDetailPage() {
               <div className="bg-card rounded-2xl border border-border p-6">
                 <h3 className="font-semibold mb-4">Event QR Code</h3>
                 <div className="flex justify-center p-4 bg-white rounded-xl">
-                  <QRCodeSVG 
-                    value={`event:${event.id}`} 
+                  <QRCodeSVG
+                    value={`event:${event.id}`}
                     size={150}
                     level="H"
                     includeMargin
@@ -330,8 +330,8 @@ export default function EventDetailPage() {
             </DialogHeader>
             <div className="flex flex-col items-center p-6">
               <div className="bg-white p-6 rounded-2xl shadow-lg mb-4">
-                <QRCodeSVG 
-                  value={`ticket:${event.id}:${user?.id}`} 
+                <QRCodeSVG
+                  value={`attendance:${event.id}:${user?.id}`}
                   size={200}
                   level="H"
                   includeMargin

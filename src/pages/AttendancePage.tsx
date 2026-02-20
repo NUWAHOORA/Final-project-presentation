@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  ScanLine, 
-  CheckCircle, 
-  XCircle, 
-  Users, 
+import {
+  ScanLine,
+  CheckCircle,
+  XCircle,
+  Users,
   Clock,
   Camera
 } from 'lucide-react';
@@ -19,8 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockEvents } from '@/lib/mockData';
+import { useEvents } from '@/hooks/useEvents';
+import { useEventRegistrations } from '@/hooks/useRegistrations';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { QRScanner } from '@/components/attendance/QRScanner';
 
 export default function AttendancePage() {
   const { toast } = useToast();
@@ -32,21 +35,122 @@ export default function AttendancePage() {
     { name: 'Sam Chen', time: '8 min ago', success: false },
   ]);
 
-  const approvedEvents = mockEvents.filter(e => e.status === 'approved');
+  const { data: events } = useEvents();
+  const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const event = approvedEvents.find(e => e.id === selectedEvent);
+
+  // Get registrations for the selected event to check attendance list
+  const { data: registrations, refetch: refetchRegistrations } = useEventRegistrations(selectedEvent || '');
+
+  const handleScan = async (decodedText: string) => {
+    if (!selectedEvent) {
+      toast({
+        title: "Error",
+        description: "Please select an event first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Expected format: attendance:event_id:user_id
+    const parts = decodedText.split(':');
+    if (parts[0] !== 'attendance' || parts.length < 3) {
+      toast({
+        title: "Invalid QR Code",
+        description: "This is not a valid attendance QR code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const [_, eventId, userId] = parts;
+
+    if (eventId !== selectedEvent) {
+      toast({
+        title: "Wrong Event",
+        description: "This ticket is for a different event.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Check if registration exists
+      const { data: registration, error: fetchError } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError || !registration) {
+        toast({
+          title: "Not Registered",
+          description: "This student is not registered for this event.",
+          variant: "destructive",
+        });
+        setRecentScans(prev => [
+          { name: 'Unknown Student', time: 'Just now', success: false },
+          ...prev.slice(0, 9)
+        ]);
+        return;
+      }
+
+      // Fetch profile data separately since the join isn't working via types
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', userId)
+        .single();
+
+      const studentName = profile?.name || 'Student';
+
+      if (registration.attended) {
+        toast({
+          title: "Already Attended",
+          description: `${studentName} has already been checked in.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Mark attendance
+      const { error: updateError } = await supabase
+        .from('registrations')
+        .update({
+          attended: true,
+          attended_at: new Date().toISOString()
+        })
+        .eq('id', registration.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Check-in successful",
+        description: `${studentName} has been checked in.`,
+      });
+
+      setRecentScans(prev => [
+        { name: studentName, time: 'Just now', success: true },
+        ...prev.slice(0, 9)
+      ]);
+
+      // Refresh statistics
+      refetchRegistrations();
+
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleManualCheckIn = () => {
     if (!manualCode) return;
-    
-    toast({
-      title: "Check-in successful",
-      description: "Attendee has been checked in.",
-    });
-    
-    setRecentScans(prev => [
-      { name: `Attendee #${manualCode}`, time: 'Just now', success: true },
-      ...prev.slice(0, 9)
-    ]);
+    handleScan(`attendance:${selectedEvent}:${manualCode}`);
     setManualCode('');
   };
 
@@ -102,25 +206,20 @@ export default function AttendancePage() {
                 {/* Scanner Area */}
                 <div className="bg-card rounded-2xl border border-border p-6">
                   <h3 className="text-lg font-semibold mb-4">QR Scanner</h3>
-                  <div className="aspect-video bg-muted rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-4 border-2 border-dashed border-primary/30 rounded-lg" />
-                    <Camera className="w-16 h-16 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground text-center">
-                      Camera scanner would be active here<br />
-                      <span className="text-sm">Scan attendee QR codes</span>
-                    </p>
+                  <div className="min-h-[300px] flex flex-col items-center justify-center relative overflow-hidden">
+                    <QRScanner onScanSuccess={handleScan} />
                   </div>
 
                   <div className="mt-6">
-                    <p className="text-sm text-muted-foreground mb-2">Or enter ticket code manually:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Or enter Student ID manually:</p>
                     <div className="flex gap-3">
                       <Input
-                        placeholder="Enter ticket code"
+                        placeholder="Enter Student ID"
                         value={manualCode}
                         onChange={(e) => setManualCode(e.target.value)}
                         className="h-11"
                       />
-                      <Button 
+                      <Button
                         onClick={handleManualCheckIn}
                         className="gradient-primary text-white"
                       >
@@ -166,23 +265,23 @@ export default function AttendancePage() {
                       <Users className="w-4 h-4" />
                       Registered
                     </span>
-                    <span className="font-semibold">{event.registeredCount}</span>
+                    <span className="font-semibold">{event.registered_count}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-2">
                       <CheckCircle className="w-4 h-4" />
                       Checked In
                     </span>
-                    <span className="font-semibold text-success">{event.attendedCount}</span>
+                    <span className="font-semibold text-success">{event.attended_count}</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div 
+                    <div
                       className="h-2 rounded-full bg-success transition-all"
-                      style={{ width: `${(event.attendedCount / event.registeredCount) * 100}%` }}
+                      style={{ width: `${(event.attended_count / (event.registered_count || 1)) * 100}%` }}
                     />
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
-                    {Math.round((event.attendedCount / event.registeredCount) * 100)}% check-in rate
+                    {event.registered_count > 0 ? Math.round((event.attended_count / event.registered_count) * 100) : 0}% check-in rate
                   </p>
                 </div>
               </div>
@@ -192,7 +291,7 @@ export default function AttendancePage() {
               <h3 className="text-lg font-semibold mb-4">Recent Scans</h3>
               <div className="space-y-3">
                 {recentScans.map((scan, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                   >
