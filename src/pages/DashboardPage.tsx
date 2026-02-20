@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  Users, 
-  TrendingUp, 
+import {
+  Calendar,
+  Users,
+  TrendingUp,
   Clock,
   CheckCircle,
   ArrowRight,
@@ -16,13 +16,13 @@ import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+
 
 export default function DashboardPage() {
   const { profile, role } = useAuth();
   const { data: events, isLoading } = useEvents();
   const updateStatusMutation = useUpdateEventStatus();
-  
+
   const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
   const upcomingEvents = approvedEvents.slice(0, 3);
@@ -33,9 +33,7 @@ export default function DashboardPage() {
   const totalAttendance = events?.reduce((sum, e) => sum + e.attended_count, 0) || 0;
   const attendanceRate = totalRegistrations > 0 ? ((totalAttendance / totalRegistrations) * 100).toFixed(1) : '0';
 
-  const monthlyTrends = [
-    { month: 'Jan', events: totalEvents, registrations: totalRegistrations },
-  ];
+
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -115,62 +113,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-card rounded-2xl border border-border p-6"
-          >
-            <h3 className="text-lg font-semibold mb-4">Monthly Registrations</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="registrations" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-card rounded-2xl border border-border p-6"
-          >
-            <h3 className="text-lg font-semibold mb-4">Events Overview</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={monthlyTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="events" 
-                  stroke="hsl(var(--accent))" 
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-        </div>
 
         {/* Quick Actions & Pending */}
         {role === 'admin' && pendingEvents.length > 0 && (
@@ -199,17 +142,17 @@ export default function DashboardPage() {
                     <p className="text-sm text-muted-foreground">{event.organizer_name}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="border-destructive text-destructive hover:bg-destructive/10"
                       onClick={() => handleReject(event.id)}
                       disabled={updateStatusMutation.isPending}
                     >
                       Reject
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       className="gradient-success text-white"
                       onClick={() => handleApprove(event.id)}
                       disabled={updateStatusMutation.isPending}
@@ -244,8 +187,8 @@ export default function DashboardPage() {
           ) : upcomingEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEvents.map((event, index) => (
-                <EventCard 
-                  key={event.id} 
+                <EventCard
+                  key={event.id}
                   event={{
                     id: event.id,
                     title: event.title,
@@ -263,8 +206,8 @@ export default function DashboardPage() {
                     imageUrl: event.image_url || undefined,
                     qrCode: event.qr_code || undefined,
                     createdAt: event.created_at
-                  }} 
-                  index={index} 
+                  }}
+                  index={index}
                 />
               ))}
             </div>
