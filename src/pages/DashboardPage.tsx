@@ -9,25 +9,45 @@ import {
   Sparkles,
   Loader2,
   Download,
+  Video,
 } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { EventCard } from '@/components/events/EventCard';
+import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
+import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
+import { parseISO, isToday, isFuture } from 'date-fns';
+
 
 export default function DashboardPage() {
   const { profile, role } = useAuth();
-  const { data: events, isLoading } = useEvents();
+  const { data: events, isLoading: eventsLoading } = useEvents();
+  const { data: allMeetings, isLoading: loadingAll } = useMeetings();
+  const { data: userMeetings, isLoading: loadingUser } = useUserMeetings();
+  const markAttendance = useMarkAttendance();
   const updateStatusMutation = useUpdateEventStatus();
   const [reportOpen, setReportOpen] = useState(false);
+
+  const isAdmin = role === 'admin';
+  const isOrganizer = role === 'organizer';
+  const meetings = isAdmin || isOrganizer ? allMeetings : userMeetings;
+  const meetingsLoading = isAdmin || isOrganizer ? loadingAll : loadingUser;
 
   const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
   const upcomingEvents = approvedEvents.slice(0, 3);
+
+  const upcomingMeetings = meetings?.filter(m => {
+    const date = parseISO(m.meeting_date);
+    return (isToday(date) || isFuture(date)) && m.status !== 'ended';
+  }).slice(0, 3) || [];
+
 
   // Calculate analytics from real data
   const totalEvents = events?.length || 0;
@@ -47,6 +67,12 @@ export default function DashboardPage() {
   const handleReject = async (eventId: string) => {
     await updateStatusMutation.mutateAsync({ id: eventId, status: 'rejected' });
   };
+
+  const handleJoinMeeting = (meetingId: string, link: string) => {
+    markAttendance.mutate({ meetingId, action: 'join' });
+    window.open(link, '_blank');
+  };
+
 
   return (
     <MainLayout>
@@ -178,7 +204,39 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* Upcoming & Live Meetings Highlight */}
+        {upcomingMeetings.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            className="mb-8"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Video className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Upcoming Meetings</h2>
+              </div>
+              <Link to="/meetings">
+                <Button variant="ghost" size="sm">
+                  View all <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingMeetings.map((meeting) => (
+                <MeetingCard
+                  key={meeting.id}
+                  meeting={meeting}
+                  onJoin={handleJoinMeeting}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Upcoming Events */}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -192,11 +250,12 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
-          {isLoading ? (
+          {eventsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : upcomingEvents.length > 0 ? (
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEvents.map((event, index) => (
                 <EventCard

@@ -312,7 +312,9 @@ export type Database = {
           meeting_time: string
           title: string
           updated_at: string
+          status: string
         }
+
         Insert: {
           agenda?: string | null
           created_at?: string
@@ -326,7 +328,9 @@ export type Database = {
           meeting_time: string
           title: string
           updated_at?: string
+          status?: string
         }
+
         Update: {
           agenda?: string | null
           created_at?: string
@@ -340,7 +344,9 @@ export type Database = {
           meeting_time?: string
           title?: string
           updated_at?: string
+          status?: string
         }
+
         Relationships: [
           {
             foreignKeyName: "meetings_event_id_fkey"

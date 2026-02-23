@@ -18,7 +18,9 @@ const categoryColors: Record<string, string> = {
   cultural: 'bg-purple-100 text-purple-700',
   workshop: 'bg-orange-100 text-orange-700',
   seminar: 'bg-indigo-100 text-indigo-700',
+  online_meeting: 'bg-teal-100 text-teal-700',
 };
+
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning border-warning/20',
@@ -41,7 +43,7 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
     >
       {/* Category gradient strip */}
       <div className="h-1 gradient-primary" />
-      
+
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">

@@ -16,7 +16,9 @@ export interface Meeting {
   created_by: string;
   created_at: string;
   updated_at: string;
+  status: 'scheduled' | 'live' | 'ended';
   event_title?: string;
+
   creator_name?: string;
 }
 
@@ -426,3 +428,35 @@ export function useMarkAttendance() {
     },
   });
 }
+
+export function useUpdateMeetingStatus() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ meetingId, status }: { meetingId: string; status: 'scheduled' | 'live' | 'ended' }) => {
+      const { error } = await supabase
+        .from('meetings')
+        .update({ status })
+        .eq('id', meetingId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-meetings'] });
+      toast({
+        title: `Meeting is now ${status}`,
+        description: status === 'live' ? 'The meeting has started.' : 'The meeting status has been updated.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error updating meeting status',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
