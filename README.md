@@ -1,73 +1,32 @@
-# Welcome to your Lovable project
+Smart University Event Management System
 
-## Project info
+A centralized web-based platform for managing university events at Bishop Barham University College.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**URL**: https://final-project-presentation.vercel.app/
 
-## How can I edit this code?
+##  Project Description
+The Smart University Event Management System is a centralized digital platform designed to improve the planning, scheduling, and coordination of university events.
+The system addresses challenges such as double booking of venues, poor communication, and lack of accountability by providing automated scheduling, approval workflows, attendance tracking, and reporting.?
+##  Problem Statement
+UCU–BBUC currently manages events using decentralized methods such as paper forms, emails, and spreadsheets. This results in:
+- Double booking of venues
+- Poor coordination between departments
+- Limited tracking of attendance
+- Lack of reliable event data
+This system provides a centralized solution to these challenges.
+##  Key Features
+-  User Authentication & Role-Based Access (Admin, Organizer, Student)
+-  Event Creation and Scheduling
+-  Venue & Resource Booking with Conflict Detection
+-  Approval Workflow for Event Requests
+- Email & System Notifications
+-  Dashboard & Reports
+-  QR Code-Based Attendance Tracking
+-  Event Participation Analytics
+ Author
+Nuwahoora Brian  
+Bachelor of Science in Information Technology  
+Uganda Christian University – Bishop Barham University College  
+2026
+   nuwahoorabrian02@gmail.com
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
