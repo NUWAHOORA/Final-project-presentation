@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/select';
 import { useUpdateEvent } from '@/hooks/useUpdateEvent';
 
-type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
+
 
 const categories: { value: EventCategory; label: string }[] = [
   { value: 'academic', label: 'Academic' },
@@ -29,7 +30,9 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'cultural', label: 'Cultural' },
   { value: 'workshop', label: 'Workshop' },
   { value: 'seminar', label: 'Seminar' },
+  { value: 'online_meeting', label: 'Online Meeting' },
 ];
+
 
 interface EditEventDialogProps {
   open: boolean;
@@ -43,8 +46,11 @@ interface EditEventDialogProps {
     venue: string;
     category: EventCategory;
     capacity: number;
+    meeting_link?: string | null;
+    meeting_status?: 'scheduled' | 'live' | 'ended' | null;
   };
 }
+
 
 export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogProps) {
   const updateEventMutation = useUpdateEvent();
@@ -56,7 +62,9 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
     venue: '',
     category: '' as EventCategory,
     capacity: '',
+    meeting_link: '',
   });
+
 
   useEffect(() => {
     if (event) {
@@ -68,13 +76,15 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
         venue: event.venue,
         category: event.category,
         capacity: event.capacity.toString(),
+        meeting_link: event.meeting_link || '',
       });
+
     }
   }, [event]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     await updateEventMutation.mutateAsync({
       id: event.id,
       title: formData.title,
@@ -84,7 +94,9 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
       venue: formData.venue,
       category: formData.category,
       capacity: parseInt(formData.capacity),
+      meeting_link: formData.category === 'online_meeting' ? formData.meeting_link : null,
     });
+
 
     onOpenChange(false);
   };
@@ -225,8 +237,8 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="gradient-primary text-white"
               disabled={updateEventMutation.isPending}
             >

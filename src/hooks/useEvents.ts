@@ -11,11 +11,13 @@ export interface Event {
   date: string;
   time: string;
   venue: string;
-  category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+  category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
   capacity: number;
   registered_count: number;
   attended_count: number;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  meeting_link?: string | null;
+  meeting_status?: 'scheduled' | 'live' | 'ended' | null;
   organizer_id: string;
   image_url: string | null;
   qr_code: string | null;
@@ -80,6 +82,7 @@ export function useEvent(id: string) {
   });
 }
 
+
 export function useCreateEvent() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -92,8 +95,10 @@ export function useCreateEvent() {
       date: string;
       time: string;
       venue: string;
-      category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+      category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
       capacity: number;
+      meeting_link?: string | null;
+      meeting_status?: 'scheduled' | 'live' | 'ended' | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -113,6 +118,8 @@ export function useCreateEvent() {
           venue: eventData.venue,
           category: eventData.category,
           capacity: eventData.capacity,
+          meeting_link: eventData.meeting_link,
+          meeting_status: eventData.meeting_status,
           organizer_id: user.id,
         }])
         .select()
@@ -169,8 +176,8 @@ export function useUpdateEventStatus() {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       toast({
         title: status === 'approved' ? 'Event Approved' : 'Event Rejected',
-        description: status === 'approved' 
-          ? 'The event is now visible to students.' 
+        description: status === 'approved'
+          ? 'The event is now visible to students.'
           : 'The event has been rejected.',
         variant: status === 'approved' ? 'default' : 'destructive',
       });
@@ -178,6 +185,37 @@ export function useUpdateEventStatus() {
     onError: (error: Error) => {
       toast({
         title: 'Error updating event',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+
+export function useUpdateEventMeetingStatus() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'scheduled' | 'live' | 'ended' }) => {
+      const { error } = await supabase
+        .from('events')
+        .update({ meeting_status: status })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: `Meeting is now ${status}`,
+        description: status === 'live' ? 'The meeting has started.' : 'The meeting status has been updated.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error updating meeting status',
         description: error.message,
         variant: 'destructive',
       });
@@ -214,3 +252,5 @@ export function useDeleteEvent() {
     },
   });
 }
+
+

@@ -15,9 +15,12 @@ export function useUpdateEvent() {
       date?: string;
       time?: string;
       venue?: string;
-      category?: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+      category?: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
       capacity?: number;
+      meeting_link?: string | null;
+      meeting_status?: 'scheduled' | 'live' | 'ended' | null;
     }) => {
+
       const { id, ...updateData } = data;
 
       // Check for scheduling conflicts if date or venue changed
@@ -30,8 +33,9 @@ export function useUpdateEvent() {
 
       const { error } = await supabase
         .from('events')
-        .update(updateData)
+        .update(updateData as any)
         .eq('id', id);
+
 
       if (error) throw error;
     },

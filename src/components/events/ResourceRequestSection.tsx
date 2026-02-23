@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useResourceTypes } from '@/hooks/useResources';
+import { useResourceTypes, useResourceAvailability } from '@/hooks/useResources';
+
 
 export interface ResourceRequestItem {
   resource_type_id: string;
@@ -21,10 +22,13 @@ export interface ResourceRequestItem {
 interface ResourceRequestSectionProps {
   requests: ResourceRequestItem[];
   onChange: (requests: ResourceRequestItem[]) => void;
+  date?: string;
 }
 
-export function ResourceRequestSection({ requests, onChange }: ResourceRequestSectionProps) {
+export function ResourceRequestSection({ requests, onChange, date }: ResourceRequestSectionProps) {
   const { data: resourceTypes, isLoading } = useResourceTypes();
+  const { data: availability } = useResourceAvailability(date || '');
+
 
   const addRequest = () => {
     onChange([...requests, { resource_type_id: '', requested_quantity: 1 }]);
@@ -76,12 +80,17 @@ export function ResourceRequestSection({ requests, onChange }: ResourceRequestSe
                       <SelectValue placeholder="Select resource" />
                     </SelectTrigger>
                     <SelectContent>
-                      {resourceTypes?.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.name} ({type.available_quantity} available)
-                        </SelectItem>
-                      ))}
+                      {resourceTypes?.map((type) => {
+                        const avail = availability?.find(a => a.id === type.id);
+                        const remaining = avail?.actual_available ?? type.available_quantity;
+                        return (
+                          <SelectItem key={type.id} value={type.id}>
+                            {type.name} ({remaining} available)
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
+
                   </Select>
                 </div>
                 <div className="space-y-1.5">

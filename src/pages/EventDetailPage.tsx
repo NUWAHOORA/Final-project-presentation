@@ -14,13 +14,17 @@ import {
   User,
   Ticket,
   Edit,
-  Loader2
+  Loader2,
+  Video,
+  ExternalLink
 } from 'lucide-react';
+
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEvent } from '@/hooks/useEvents';
+import { useEvent, useUpdateEventMeetingStatus } from '@/hooks/useEvents';
+
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -52,7 +56,9 @@ export default function EventDetailPage() {
   const isRegistered = !!registration;
   const registerMutation = useRegisterForEvent();
   const cancelMutation = useCancelRegistration();
+  const updateMeetingStatus = useUpdateEventMeetingStatus();
   const [showQRModal, setShowQRModal] = useState(false);
+
   const [showEditModal, setShowEditModal] = useState(false);
 
   if (isLoading) {
@@ -138,6 +144,65 @@ export default function EventDetailPage() {
                 </div>
 
                 <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
+
+                {/* Online Meeting Controls */}
+                {event.category === 'online_meeting' && (
+                  <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/10 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Video className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Online Meeting</p>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          Status: <span className="text-primary font-medium">{event.meeting_status}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {/* Start Meeting Button (Organizer/Admin) */}
+                      {(isOwner || role === 'admin') && event.meeting_status === 'scheduled' && (
+                        <Button
+                          onClick={() => {
+                            updateMeetingStatus.mutate({ id: event.id, status: 'live' });
+                            if (event.meeting_link) window.open(event.meeting_link, '_blank');
+                          }}
+                          className="gradient-primary text-white"
+                          disabled={updateMeetingStatus.isPending || new Date(`${event.date}T${event.time}`) > new Date()}
+                        >
+                          <Video className="w-4 h-4 mr-2" />
+                          Start Meeting
+                        </Button>
+                      )}
+
+                      {/* Join Meeting Button (Participants) */}
+                      {event.meeting_status === 'live' && (
+                        <Button
+                          onClick={() => {
+                            if (event.meeting_link) window.open(event.meeting_link, '_blank');
+                          }}
+                          className="gradient-success text-white"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Join Meeting
+                        </Button>
+                      )}
+
+                      {/* End Meeting Button (Organizer/Admin) */}
+                      {(isOwner || role === 'admin') && event.meeting_status === 'live' && (
+                        <Button
+                          variant="outline"
+                          onClick={() => updateMeetingStatus.mutate({ id: event.id, status: 'ended' })}
+                          disabled={updateMeetingStatus.isPending}
+                        >
+                          End Meeting
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="flex items-center gap-4 mb-6 text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -365,7 +430,10 @@ export default function EventDetailPage() {
               venue: event.venue,
               category: event.category,
               capacity: event.capacity,
+              meeting_link: event.meeting_link,
+              meeting_status: event.meeting_status,
             }}
+
           />
         )}
       </div>

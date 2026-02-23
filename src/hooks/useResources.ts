@@ -118,8 +118,8 @@ export function useAllocateResource() {
       // Update available quantity
       const { error: updateError } = await supabase
         .from('resource_types')
-        .update({ 
-          available_quantity: resource.available_quantity - quantity 
+        .update({
+          available_quantity: resource.available_quantity - quantity
         })
         .eq('id', resourceTypeId);
 
@@ -176,8 +176,8 @@ export function useDeallocateResource() {
 
       const { error: updateError } = await supabase
         .from('resource_types')
-        .update({ 
-          available_quantity: resource.available_quantity + quantity 
+        .update({
+          available_quantity: resource.available_quantity + quantity
         })
         .eq('id', resourceTypeId);
 
@@ -234,5 +234,46 @@ export function useCreateResourceType() {
         variant: 'destructive',
       });
     },
+  });
+}
+export function useResourceAvailability(date: string) {
+  return useQuery({
+    queryKey: ['resource-availability', date],
+    queryFn: async () => {
+      if (!date) return [];
+
+      // Get all resource types
+      const { data: resourceTypes, error: typeError } = await supabase
+        .from('resource_types')
+        .select('*');
+
+      if (typeError) throw typeError;
+
+      const { data: allocations, error: allocError } = await supabase
+        .from('event_resources')
+        .select(`
+          resource_type_id,
+          quantity,
+          events!inner(date)
+        `)
+        .eq('events.date', date);
+
+      if (allocError) throw allocError;
+
+      // Calculate availability
+      const availability = resourceTypes.map(type => {
+        const reserved = (allocations as any[])
+          .filter(a => a.resource_type_id === type.id)
+          .reduce((sum, a) => sum + a.quantity, 0);
+
+        return {
+          ...type,
+          actual_available: type.total_quantity - reserved
+        };
+      });
+
+      return availability;
+    },
+    enabled: !!date,
   });
 }

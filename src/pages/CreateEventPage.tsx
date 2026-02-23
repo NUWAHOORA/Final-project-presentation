@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
   FileText,
   Tags,
   Check,
@@ -28,7 +28,8 @@ import { useCreateEvent } from '@/hooks/useEvents';
 import { useCreateBulkResourceRequests } from '@/hooks/useResourceRequests';
 import { ResourceRequestSection, ResourceRequestItem } from '@/components/events/ResourceRequestSection';
 
-type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
+
 
 const categories: { value: EventCategory; label: string }[] = [
   { value: 'academic', label: 'Academic' },
@@ -37,7 +38,9 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'cultural', label: 'Cultural' },
   { value: 'workshop', label: 'Workshop' },
   { value: 'seminar', label: 'Seminar' },
+  { value: 'online_meeting', label: 'Online Meeting' },
 ];
+
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
@@ -49,23 +52,28 @@ export default function CreateEventPage() {
     date: '',
     time: '',
     venue: '',
-    category: '' as EventCategory,
+    category: '' as EventCategory | 'online_meeting',
     capacity: '',
+    meeting_link: '',
   });
+
   const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const event = await createEventMutation.mutateAsync({
       title: formData.title,
       description: formData.description,
       date: formData.date,
       time: formData.time,
       venue: formData.venue,
-      category: formData.category,
+      category: formData.category as EventCategory,
       capacity: parseInt(formData.capacity),
+      meeting_link: formData.category === 'online_meeting' ? formData.meeting_link : null,
+      meeting_status: formData.category === 'online_meeting' ? 'scheduled' : null,
     });
+
 
     // Submit resource requests if any
     const validRequests = resourceRequests.filter(r => r.resource_type_id && r.requested_quantity > 0);
@@ -240,14 +248,53 @@ export default function CreateEventPage() {
                 />
               </div>
             </div>
+
+            {/* Meeting Link (Conditional) */}
+            {formData.category === 'online_meeting' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-2"
+              >
+                <Label htmlFor="meeting_link" className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  Meeting Link
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="meeting_link"
+                    placeholder="e.g., https://zoom.us/j/..."
+                    value={formData.meeting_link}
+                    onChange={(e) => handleChange('meeting_link', e.target.value)}
+                    className="h-12"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 px-6"
+                    onClick={() => {
+                      const room = Math.random().toString(36).substring(7);
+                      handleChange('meeting_link', `https://meet.jit.si/smart-uni-${room}`);
+                    }}
+                  >
+                    Generate
+                  </Button>
+                </div>
+              </motion.div>
+
+            )}
           </div>
+
 
           {/* Resource Requests Section */}
           <div className="bg-card rounded-2xl border border-border p-6">
             <ResourceRequestSection
               requests={resourceRequests}
               onChange={setResourceRequests}
+              date={formData.date}
             />
+
           </div>
 
           {/* Submit Buttons */}
@@ -255,8 +302,8 @@ export default function CreateEventPage() {
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="gradient-primary text-white min-w-32"
               disabled={isSubmitting}
             >
