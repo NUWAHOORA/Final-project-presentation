@@ -169,12 +169,13 @@ export default function EventDetailPage() {
                             if (event.meeting_link) window.open(event.meeting_link, '_blank');
                           }}
                           className="gradient-primary text-white"
-                          disabled={updateMeetingStatus.isPending || new Date(`${event.date}T${event.time}`) > new Date()}
+                          disabled={updateMeetingStatus.isPending}
                         >
                           <Video className="w-4 h-4 mr-2" />
                           Start Meeting
                         </Button>
                       )}
+
 
                       {/* Join Meeting Button (Participants) */}
                       {event.meeting_status === 'live' && (
@@ -417,26 +418,28 @@ export default function EventDetailPage() {
         </Dialog>
 
         {/* Edit Event Modal */}
-        {showEditModal && (
-          <EditEventDialog
-            open={showEditModal}
-            onOpenChange={setShowEditModal}
-            event={{
-              id: event.id,
-              title: event.title,
-              description: event.description,
-              date: event.date,
-              time: event.time,
-              venue: event.venue,
-              category: event.category,
-              capacity: event.capacity,
-              meeting_link: event.meeting_link,
-              meeting_status: event.meeting_status,
-            }}
+        {
+          showEditModal && (
+            <EditEventDialog
+              open={showEditModal}
+              onOpenChange={setShowEditModal}
+              event={{
+                id: event.id,
+                title: event.title,
+                description: event.description,
+                date: event.date,
+                time: event.time,
+                venue: event.venue,
+                category: event.category,
+                capacity: event.capacity,
+                meeting_link: event.meeting_link,
+                meeting_status: event.meeting_status,
+              }}
 
-          />
-        )}
-      </div>
-    </MainLayout>
+            />
+          )
+        }
+      </div >
+    </MainLayout >
   );
 }
