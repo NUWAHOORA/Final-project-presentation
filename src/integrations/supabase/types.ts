@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          event_id: string
+          id: string
+          student_id: string
+          timestamp: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          student_id: string
+          timestamp?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          student_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       email_notification_logs: {
         Row: {
           created_at: string | null
@@ -604,7 +640,7 @@ export type Database = {
       | "workshop"
       | "seminar"
       | "online_meeting"
-      event_status: "pending" | "approved" | "rejected" | "cancelled"
+      event_status: "pending" | "approved" | "rejected" | "cancelled" | "live"
 
     }
     CompositeTypes: {
@@ -744,7 +780,7 @@ export const Constants = {
         "online_meeting",
       ],
 
-      event_status: ["pending", "approved", "rejected", "cancelled"],
+      event_status: ["pending", "approved", "rejected", "cancelled", "live"],
     },
   },
 } as const

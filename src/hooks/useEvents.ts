@@ -15,7 +15,7 @@ export interface Event {
   capacity: number;
   registered_count: number;
   attended_count: number;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'live';
   meeting_link?: string | null;
   meeting_status?: 'scheduled' | 'live' | 'ended' | null;
   organizer_id: string;

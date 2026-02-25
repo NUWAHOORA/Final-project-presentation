@@ -6,22 +6,23 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 
-import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import EventsPage from "./pages/EventsPage";
-import EventDetailPage from "./pages/EventDetailPage";
-import CreateEventPage from "./pages/CreateEventPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import TicketsPage from "./pages/TicketsPage";
-import ApprovalsPage from "./pages/ApprovalsPage";
-import RegistrationsPage from "./pages/RegistrationsPage";
-import AttendancePage from "./pages/AttendancePage";
-import UsersPage from "./pages/UsersPage";
-import ResourcesPage from "./pages/ResourcesPage";
-import MeetingsPage from "./pages/MeetingsPage";
-import EmailSettingsPage from "./pages/EmailSettingsPage";
-import NotFound from "./pages/NotFound";
+import LoginPage from "@/pages/LoginPage";
+import DashboardPage from "@/pages/DashboardPage";
+import EventsPage from "@/pages/EventsPage";
+import EventDetailPage from "@/pages/EventDetailPage";
+import CreateEventPage from "@/pages/CreateEventPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
+import NotificationsPage from "@/pages/NotificationsPage";
+import TicketsPage from "@/pages/TicketsPage";
+import ApprovalsPage from "@/pages/ApprovalsPage";
+import RegistrationsPage from "@/pages/RegistrationsPage";
+import AttendancePage from "@/pages/AttendancePage";
+import MarkAttendancePage from "@/pages/MarkAttendancePage";
+import UsersPage from "@/pages/UsersPage";
+import ResourcesPage from "@/pages/ResourcesPage";
+import MeetingsPage from "@/pages/MeetingsPage";
+import EmailSettingsPage from "@/pages/EmailSettingsPage";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/approvals" element={<ApprovalsPage />} />
               <Route path="/registrations" element={<RegistrationsPage />} />
               <Route path="/attendance" element={<AttendancePage />} />
+              <Route path="/mark-attendance/:eventId" element={<MarkAttendancePage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/resources" element={<ResourcesPage />} />
               <Route path="/meetings" element={<MeetingsPage />} />

@@ -256,17 +256,60 @@ export default function AttendancePage() {
 
                 {/* Event QR Code */}
                 <div className="bg-card rounded-2xl border border-border p-6">
-                  <h3 className="text-lg font-semibold mb-4">Event Check-in QR</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Display this QR code for self check-in
-                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Event Check-in QR</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Display this QR code for student self check-in
+                      </p>
+                    </div>
+                    {event?.status !== 'live' && (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const { error } = await supabase
+                              .from('events')
+                              .update({ status: 'live' })
+                              .eq('id', selectedEvent);
+
+                            if (error) throw error;
+
+                            toast({
+                              title: "Event is Live",
+                              description: "Students can now mark their attendance."
+                            });
+
+                            // Reload the page or refetch events might be needed
+                            // Since we don't have a direct refetch for 'events' here easily,
+                            // we'll rely on the user to see the change after a manual refresh or 
+                            // we could add a window.location.reload() but that's messy.
+                            // Better: The useEvents hook should ideally be invalidated.
+                          } catch (error: any) {
+                            toast({
+                              title: "Error",
+                              description: error.message || "Failed to go live.",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                        className="gradient-primary text-white"
+                      >
+                        Go Live
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex justify-center p-6 bg-white rounded-xl">
                     <QRCodeSVG
-                      value={`event-checkin:${selectedEvent}`}
+                      value={`${window.location.origin}/mark-attendance/${selectedEvent}`}
                       size={200}
                       level="H"
                       includeMargin
                     />
+                  </div>
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg text-center break-all">
+                    <p className="text-xs font-mono text-muted-foreground">
+                      {window.location.origin}/mark-attendance/{selectedEvent}
+                    </p>
                   </div>
                 </div>
               </>
