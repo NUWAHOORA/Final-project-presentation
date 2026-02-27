@@ -123,6 +123,20 @@ export function useRegisterForEvent() {
     mutationFn: async (eventId: string) => {
       if (!user) throw new Error('Not authenticated');
 
+      // Guard: fetch event date/time and reject if the event is already past
+      const { data: eventCheck, error: eventCheckError } = await supabase
+        .from('events')
+        .select('date, time')
+        .eq('id', eventId)
+        .single();
+
+      if (eventCheckError) throw eventCheckError;
+
+      const eventDateTime = new Date(`${eventCheck.date}T${eventCheck.time}`);
+      if (eventDateTime < new Date()) {
+        throw new Error('Cannot register for a past event.');
+      }
+
       const { data, error } = await supabase
         .from('registrations')
         .insert([{ event_id: eventId, user_id: user.id }])

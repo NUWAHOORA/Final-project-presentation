@@ -89,6 +89,9 @@ export default function EventDetailPage() {
   const isOwner = user?.id === event.organizer_id;
   const canEdit = isOwner || role === 'admin';
 
+  // Combine date + time to get a precise past-event cutoff
+  const isPastEvent = new Date(`${event.date}T${event.time}`) < new Date();
+
   const handleRegister = () => {
     if (event) {
       registerMutation.mutate(event.id);
@@ -306,7 +309,23 @@ export default function EventDetailPage() {
 
               {role === 'student' && event.status === 'approved' && (
                 <>
-                  {isCheckingRegistration ? (
+                  {isPastEvent ? (
+                    // Event is in the past — show info only
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                        This event has already taken place.
+                      </p>
+                      {isRegistered && (
+                        <Button
+                          className="w-full gradient-success text-white"
+                          onClick={() => setShowQRModal(true)}
+                        >
+                          <Ticket className="w-4 h-4 mr-2" />
+                          View My Ticket
+                        </Button>
+                      )}
+                    </div>
+                  ) : isCheckingRegistration ? (
                     <Button className="w-full" disabled>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Checking...
