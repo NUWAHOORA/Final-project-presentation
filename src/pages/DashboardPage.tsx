@@ -128,30 +128,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Events"
-            value={totalEvents}
-            icon={Calendar}
-            variant="primary"
-            delay={0}
-          />
-          <StatCard
-            title="Total Registrations"
-            value={totalRegistrations.toLocaleString()}
-            icon={Users}
-            variant="success"
-            delay={0.1}
-          />
-          <StatCard
-            title="Pending Approvals"
-            value={pendingEvents.length}
-            icon={Clock}
-            variant="warning"
-            delay={0.3}
-          />
-        </div>
+        {/* Stats Grid — admin only */}
+        {role === 'admin' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              title="Total Events"
+              value={totalEvents}
+              icon={Calendar}
+              variant="primary"
+              delay={0}
+            />
+            <StatCard
+              title="Total Registrations"
+              value={totalRegistrations.toLocaleString()}
+              icon={Users}
+              variant="success"
+              delay={0.1}
+            />
+            <StatCard
+              title="Pending Approvals"
+              value={pendingEvents.length}
+              icon={Clock}
+              variant="warning"
+              delay={0.3}
+            />
+          </div>
+        )}
 
         {/* Quick Actions & Pending */}
         {role === 'admin' && pendingEvents.length > 0 && (

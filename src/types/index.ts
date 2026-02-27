@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'organizer' | 'student';
 
-export type EventStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type EventStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'live';
 
 export type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
 
