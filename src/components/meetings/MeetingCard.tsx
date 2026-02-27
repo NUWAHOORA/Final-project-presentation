@@ -213,26 +213,17 @@ export function MeetingCard({
               </Button>
             )}
 
-            {/* Scheduled Join (Disabled or Tooltip) */}
-            {meeting.status === 'scheduled' && !canManage && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full opacity-50 cursor-not-allowed"
-                      disabled
-                    >
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      Join Soon
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  The host has not started the meeting yet.
-                </TooltipContent>
-              </Tooltip>
+            {/* Join Meeting Link — available to everyone once scheduled */}
+            {meeting.status === 'scheduled' && meeting.meeting_link && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleJoinClick}
+                className="flex-1 border-primary text-primary hover:bg-primary/10"
+              >
+                <ExternalLink className="w-4 h-4 mr-1" />
+                Join Meeting
+              </Button>
             )}
           </div>
 
