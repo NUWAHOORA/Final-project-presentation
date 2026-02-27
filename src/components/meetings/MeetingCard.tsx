@@ -57,7 +57,14 @@ export function MeetingCard({
   const { user, role } = useAuth();
   const updateStatus = useUpdateMeetingStatus();
   const meetingDate = parseISO(meeting.meeting_date);
-  const isPastMeeting = isPast(meetingDate);
+  // Combine date + time so the meeting is only "past" after its actual start time
+  const meetingDateTime = (() => {
+    const [hours, minutes] = (meeting.meeting_time || '00:00').split(':').map(Number);
+    const dt = new Date(meetingDate);
+    dt.setHours(hours, minutes, 0, 0);
+    return dt;
+  })();
+  const isPastMeeting = isPast(meetingDateTime);
   const canManage = user?.id === meeting.created_by || role === 'admin';
   const isOrganizer = role === 'organizer' || role === 'admin';
 
@@ -90,12 +97,12 @@ export function MeetingCard({
     >
       <Card className={cn(
         "overflow-hidden transition-all hover:shadow-md",
-        (isPastMeeting || meeting.status === 'ended') && "opacity-60"
+        meeting.status === 'ended' && "opacity-60"
       )}>
         <div className={cn(
           "h-1",
           meeting.status === 'live' ? "bg-success" :
-            (isPastMeeting || meeting.status === 'ended') ? "bg-muted" : "bg-primary"
+            meeting.status === 'ended' ? "bg-muted" : "bg-primary"
         )} />
 
         <CardHeader className="pb-2">
@@ -214,16 +221,35 @@ export function MeetingCard({
             )}
 
             {/* Join Meeting Link — available to everyone once scheduled */}
-            {meeting.status === 'scheduled' && meeting.meeting_link && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleJoinClick}
-                className="flex-1 border-primary text-primary hover:bg-primary/10"
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                Join Meeting
-              </Button>
+            {meeting.status === 'scheduled' && (
+              meeting.meeting_link ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleJoinClick}
+                  className="flex-1 border-primary text-primary hover:bg-primary/10"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  Join Meeting
+                </Button>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full opacity-50 cursor-not-allowed"
+                        disabled
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Join Meeting
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>No meeting link has been set.</TooltipContent>
+                </Tooltip>
+              )
             )}
           </div>
 
