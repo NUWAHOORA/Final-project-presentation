@@ -88,7 +88,7 @@ export function AddUserDialog({ open, onOpenChange, onAddUser, isLoading }: AddU
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Enter name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="pl-10"
