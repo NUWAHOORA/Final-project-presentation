@@ -104,7 +104,7 @@ export function AddUserDialog({ open, onOpenChange, onAddUser, isLoading }: AddU
               <Input
                 id="email"
                 type="email"
-                placeholder="user@university.edu"
+                placeholder="Enter Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
