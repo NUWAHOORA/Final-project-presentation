@@ -95,10 +95,8 @@ export function useCreateEvent() {
       date: string;
       time: string;
       venue: string;
-      category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
+      category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
       capacity: number;
-      meeting_link?: string | null;
-      meeting_status?: 'scheduled' | 'live' | 'ended' | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -118,8 +116,6 @@ export function useCreateEvent() {
           venue: eventData.venue,
           category: eventData.category,
           capacity: eventData.capacity,
-          meeting_link: eventData.meeting_link,
-          meeting_status: eventData.meeting_status,
           organizer_id: user.id,
         }])
         .select()

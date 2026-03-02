@@ -28,7 +28,7 @@ import { useCreateEvent } from '@/hooks/useEvents';
 import { useCreateBulkResourceRequests } from '@/hooks/useResourceRequests';
 import { ResourceRequestSection, ResourceRequestItem } from '@/components/events/ResourceRequestSection';
 
-type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
+type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
 
 
 const categories: { value: EventCategory; label: string }[] = [
@@ -38,7 +38,6 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'cultural', label: 'Cultural' },
   { value: 'workshop', label: 'Workshop' },
   { value: 'seminar', label: 'Seminar' },
-  { value: 'online_meeting', label: 'Online Meeting' },
 ];
 
 
@@ -52,9 +51,8 @@ export default function CreateEventPage() {
     date: '',
     time: '',
     venue: '',
-    category: '' as EventCategory | 'online_meeting',
+    category: '' as EventCategory,
     capacity: '',
-    meeting_link: '',
   });
 
   const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
@@ -70,8 +68,6 @@ export default function CreateEventPage() {
       venue: formData.venue,
       category: formData.category as EventCategory,
       capacity: parseInt(formData.capacity),
-      meeting_link: formData.category === 'online_meeting' ? formData.meeting_link : null,
-      meeting_status: formData.category === 'online_meeting' ? 'scheduled' : null,
     });
 
 
@@ -249,41 +245,7 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Meeting Link (Conditional) */}
-            {formData.category === 'online_meeting' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-2"
-              >
-                <Label htmlFor="meeting_link" className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary" />
-                  Meeting Link
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="meeting_link"
-                    placeholder="e.g., https://zoom.us/j/..."
-                    value={formData.meeting_link}
-                    onChange={(e) => handleChange('meeting_link', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-12 px-6"
-                    onClick={() => {
-                      const room = Math.random().toString(36).substring(7);
-                      handleChange('meeting_link', `https://meet.jit.si/smart-uni-${room}`);
-                    }}
-                  >
-                    Generate
-                  </Button>
-                </div>
-              </motion.div>
 
-            )}
           </div>
 
 
