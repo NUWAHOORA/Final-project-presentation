@@ -32,7 +32,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { Meeting, useUpdateMeetingStatus } from '@/hooks/useMeetings';
+import { Meeting } from '@/hooks/useMeetings';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MeetingCardProps {
@@ -55,18 +55,9 @@ export function MeetingCard({
   showEventTitle = true,
 }: MeetingCardProps) {
   const { user, role } = useAuth();
-  const updateStatus = useUpdateMeetingStatus();
   const meetingDate = parseISO(meeting.meeting_date);
-  // Combine date + time so the meeting is only "past" after its actual start time
-  const meetingDateTime = (() => {
-    const [hours, minutes] = (meeting.meeting_time || '00:00').split(':').map(Number);
-    const dt = new Date(meetingDate);
-    dt.setHours(hours, minutes, 0, 0);
-    return dt;
-  })();
-  const isPastMeeting = isPast(meetingDateTime);
-  const canManage = user?.id === meeting.created_by || role === 'admin' || role === 'organizer';
-  const isOrganizer = role === 'organizer' || role === 'admin';
+  const isPastMeeting = isPast(meetingDate) && !isToday(meetingDate);
+  const canManage = user?.id === meeting.created_by || role === 'admin';
 
   const getDateLabel = () => {
     if (isToday(meetingDate)) return 'Today';
@@ -82,7 +73,6 @@ export function MeetingCard({
   };
 
   const handleJoinClick = () => {
-    if (!meeting.meeting_link) return;
     if (onJoin) {
       onJoin(meeting.id, meeting.meeting_link);
     } else {
@@ -98,22 +88,18 @@ export function MeetingCard({
     >
       <Card className={cn(
         "overflow-hidden transition-all hover:shadow-md",
-        meeting.status === 'ended' && "opacity-60"
+        isPastMeeting && "opacity-60"
       )}>
         <div className={cn(
           "h-1",
-          meeting.status === 'live' ? "bg-success" :
-            meeting.status === 'ended' ? "bg-muted" : "bg-primary"
+          isToday(meetingDate) ? "bg-success" : isPastMeeting ? "bg-muted" : "bg-primary"
         )} />
-
+        
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <Video className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  meeting.status === 'live' ? "text-success animate-pulse" : "text-primary"
-                )} />
+                <Video className="w-4 h-4 text-primary flex-shrink-0" />
                 <h3 className="font-semibold text-base truncate">{meeting.title}</h3>
               </div>
               {showEventTitle && meeting.event_title && (
@@ -123,20 +109,15 @@ export function MeetingCard({
               )}
             </div>
             <div className="flex items-center gap-1">
-              {meeting.status === 'live' && (
-                <Badge className="bg-success text-success-foreground animate-pulse">
-                  Live
-                </Badge>
-              )}
-              {isToday(meetingDate) && !isPastMeeting && meeting.status === 'scheduled' && (
-                <Badge className="bg-primary text-primary-foreground">
+              {isToday(meetingDate) && !isPastMeeting && (
+                <Badge className="bg-success text-success-foreground">
                   Today
                 </Badge>
               )}
               {participantStatus && (
                 <Badge variant={
                   participantStatus === 'accepted' ? 'default' :
-                    participantStatus === 'declined' ? 'destructive' : 'secondary'
+                  participantStatus === 'declined' ? 'destructive' : 'secondary'
                 }>
                   {participantStatus}
                 </Badge>
@@ -178,156 +159,82 @@ export function MeetingCard({
         </CardContent>
 
         <CardFooter className="pt-3 border-t flex flex-wrap gap-2">
-          {/* Action Buttons */}
-          <div className="flex-1 flex gap-2">
-            {/* Start Meeting Button (Creator/Admin/Organizer) */}
-            {canManage && meeting.status === 'scheduled' && (
-              <Button
-                size="sm"
-                onClick={() => {
-                  updateStatus.mutate(
-                    { meetingId: meeting.id, status: 'live' },
-                    {
-                      onSuccess: () => {
-                        if (meeting.meeting_link) {
-                          handleJoinClick();
-                        }
-                      },
-                    }
-                  );
-                }}
-                disabled={updateStatus.isPending}
-                className="gradient-primary text-white flex-1"
-              >
-                <Video className="w-4 h-4 mr-1" />
-                {updateStatus.isPending ? 'Starting...' : 'Start Meeting'}
-              </Button>
-            )}
-
-            {/* Join Meeting Button (Participants) */}
-            {meeting.status === 'live' && (
+          {!isPastMeeting && (
+            <>
               <Button
                 size="sm"
                 onClick={handleJoinClick}
-                className="gradient-success text-white flex-1"
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                Join Now
-              </Button>
-            )}
-
-            {/* End Meeting Button (Creator/Admin Only) */}
-            {canManage && meeting.status === 'live' && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => updateStatus.mutate({ meetingId: meeting.id, status: 'ended' })}
-                disabled={updateStatus.isPending}
                 className="flex-1"
               >
-                End Meeting
+                <ExternalLink className="w-4 h-4 mr-1" />
+                {canManage ? 'Start Meeting' : 'Join Meeting'}
               </Button>
-            )}
 
-            {/* Join Meeting Link — available to everyone once scheduled */}
-            {!canManage && meeting.status === 'scheduled' && (
-              meeting.meeting_link ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleJoinClick}
-                  className="flex-1 border-primary text-primary hover:bg-primary/10"
-                >
-                  <ExternalLink className="w-4 h-4 mr-1" />
-                  Join Meeting
+              {participantStatus === 'invited' && (
+                <>
+                  {onAccept && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-success border-success hover:bg-success/10"
+                          onClick={() => onAccept(meeting.id)}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Accept invitation</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onDecline && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive border-destructive hover:bg-destructive/10"
+                          onClick={() => onDecline(meeting.id)}
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Decline invitation</TooltipContent>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {canManage && onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="text-destructive">
+                  <Trash2 className="w-4 h-4" />
                 </Button>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full opacity-50 cursor-not-allowed"
-                        disabled
-                      >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Join Meeting
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>No meeting link has been set.</TooltipContent>
-                </Tooltip>
-              )
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {participantStatus === 'invited' && meeting.status === 'scheduled' && (
-              <>
-                {onAccept && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-success border-success hover:bg-success/10"
-                        onClick={() => onAccept(meeting.id)}
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Accept invitation</TooltipContent>
-                  </Tooltip>
-                )}
-                {onDecline && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive border-destructive hover:bg-destructive/10"
-                        onClick={() => onDecline(meeting.id)}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Decline invitation</TooltipContent>
-                  </Tooltip>
-                )}
-              </>
-            )}
-
-            {canManage && onDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete this meeting and remove all participants. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => onDelete(meeting.id)}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Meeting?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this meeting and remove all participants. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => onDelete(meeting.id)}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </CardFooter>
       </Card>
     </motion.div>
   );
 }
-
