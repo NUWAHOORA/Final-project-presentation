@@ -65,7 +65,7 @@ export function MeetingCard({
     return dt;
   })();
   const isPastMeeting = isPast(meetingDateTime);
-  const canManage = user?.id === meeting.created_by || role === 'admin';
+  const canManage = user?.id === meeting.created_by || role === 'admin' || role === 'organizer';
   const isOrganizer = role === 'organizer' || role === 'admin';
 
   const getDateLabel = () => {
@@ -82,6 +82,7 @@ export function MeetingCard({
   };
 
   const handleJoinClick = () => {
+    if (!meeting.meeting_link) return;
     if (onJoin) {
       onJoin(meeting.id, meeting.meeting_link);
     } else {
@@ -179,19 +180,27 @@ export function MeetingCard({
         <CardFooter className="pt-3 border-t flex flex-wrap gap-2">
           {/* Action Buttons */}
           <div className="flex-1 flex gap-2">
-            {/* Start Meeting Button (Creator/Admin Only) */}
+            {/* Start Meeting Button (Creator/Admin/Organizer) */}
             {canManage && meeting.status === 'scheduled' && (
               <Button
                 size="sm"
                 onClick={() => {
-                  updateStatus.mutate({ meetingId: meeting.id, status: 'live' });
-                  handleJoinClick();
+                  updateStatus.mutate(
+                    { meetingId: meeting.id, status: 'live' },
+                    {
+                      onSuccess: () => {
+                        if (meeting.meeting_link) {
+                          handleJoinClick();
+                        }
+                      },
+                    }
+                  );
                 }}
                 disabled={updateStatus.isPending}
                 className="gradient-primary text-white flex-1"
               >
                 <Video className="w-4 h-4 mr-1" />
-                Start Meeting
+                {updateStatus.isPending ? 'Starting...' : 'Start Meeting'}
               </Button>
             )}
 
@@ -221,7 +230,7 @@ export function MeetingCard({
             )}
 
             {/* Join Meeting Link — available to everyone once scheduled */}
-            {meeting.status === 'scheduled' && (
+            {!canManage && meeting.status === 'scheduled' && (
               meeting.meeting_link ? (
                 <Button
                   size="sm"
