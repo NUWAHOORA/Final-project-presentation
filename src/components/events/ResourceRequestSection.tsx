@@ -31,7 +31,7 @@ export function ResourceRequestSection({ requests, onChange, date }: ResourceReq
 
 
   const addRequest = () => {
-    onChange([...requests, { resource_type_id: '', requested_quantity: 1 }]);
+    onChange([...requests, { resource_type_id: '', requested_quantity: 0 }]);
   };
 
   const removeRequest = (index: number) => {
@@ -97,9 +97,9 @@ export function ResourceRequestSection({ requests, onChange, date }: ResourceReq
                   <Label className="text-xs text-muted-foreground">Quantity</Label>
                   <Input
                     type="number"
-                    min={1}
+                    min={0}
                     value={request.requested_quantity}
-                    onChange={(e) => updateRequest(index, 'requested_quantity', parseInt(e.target.value) || 1)}
+                    onChange={(e) => updateRequest(index, 'requested_quantity', parseInt(e.target.value) || 0)}
                   />
                 </div>
                 <div className="space-y-1.5">
