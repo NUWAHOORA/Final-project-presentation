@@ -270,8 +270,12 @@ CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
+DECLARE
+  user_role app_role;
 BEGIN
+  -- Insert profile
   INSERT INTO profiles (user_id, name, email)
   VALUES (
     NEW.id,
@@ -279,8 +283,14 @@ BEGIN
     NEW.email
   );
 
+  -- Read the role from signup metadata, default to 'student'
+  user_role := COALESCE(
+    (NEW.raw_user_meta_data->>'role')::app_role,
+    'student'
+  );
+
   INSERT INTO user_roles (user_id, role)
-  VALUES (NEW.id, 'student');
+  VALUES (NEW.id, user_role);
 
   RETURN NEW;
 END;
