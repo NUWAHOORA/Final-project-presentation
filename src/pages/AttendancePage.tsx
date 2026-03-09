@@ -29,11 +29,7 @@ export default function AttendancePage() {
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState('');
   const [manualCode, setManualCode] = useState('');
-  const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean }[]>([
-    { name: 'Alex Rivera', time: '2 min ago', success: true },
-    { name: 'Jordan Lee', time: '5 min ago', success: true },
-    { name: 'Sam Chen', time: '8 min ago', success: false },
-  ]);
+  const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean }[]>([]);
 
   const { data: events } = useEvents();
   const approvedEvents = events?.filter(e => e.status === 'approved') || [];
