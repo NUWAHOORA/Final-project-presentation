@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Package, 
-  Plus, 
+import {
+  Package,
+  Plus,
   Settings,
   Monitor,
   Music,
@@ -20,16 +20,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
-  DialogTrigger 
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { useResourceTypes, useCreateResourceType } from '@/hooks/useResources';
+import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
 
 const resourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   'Chairs': Armchair,
@@ -134,7 +135,7 @@ export default function ResourcesPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleCreate}
                   disabled={createMutation.isPending || !newResource.name || newResource.total_quantity <= 0}
                   className="gradient-primary text-white"
@@ -214,6 +215,13 @@ export default function ResourcesPage() {
               Add Resource Type
             </Button>
           </motion.div>
+        )}
+
+        {/* Global Audit Log */}
+        {resources && resources.length > 0 && (
+          <div className="mt-10">
+            <ResourceAuditLog title="Global Resource Audit Log" />
+          </div>
         )}
       </div>
     </MainLayout>

@@ -16,7 +16,9 @@ import {
   Edit,
   Loader2,
   Video,
-  ExternalLink
+  ExternalLink,
+  Package,
+  RotateCcw,
 } from 'lucide-react';
 
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -35,7 +37,10 @@ import {
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
+import { ReturnResourceDialog } from '@/components/resources/ReturnResourceDialog';
+import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
 import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { useEventResources } from '@/hooks/useResources';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -45,6 +50,73 @@ const categoryColors: Record<string, string> = {
   workshop: 'bg-orange-100 text-orange-700',
   seminar: 'bg-indigo-100 text-indigo-700',
 };
+
+// Inline sub-component: Event Resource Summary
+function EventResourceSummary({
+  eventId,
+  isPastEvent,
+  canEdit,
+  onReturnClick,
+}: {
+  eventId: string;
+  isPastEvent: boolean;
+  canEdit: boolean;
+  onReturnClick: () => void;
+}) {
+  const { data: resources, isLoading } = useEventResources(eventId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!resources || resources.length === 0) return null;
+
+  const totalAllocated = resources.reduce((sum, r) => sum + r.quantity, 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card rounded-2xl border border-border overflow-hidden mt-6"
+    >
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Package className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold text-lg">Allocated Resources</h3>
+          <Badge variant="secondary" className="ml-2">{totalAllocated} total</Badge>
+        </div>
+        {isPastEvent && canEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReturnClick}
+            className="border-primary/30 text-primary hover:bg-primary/5"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Return Resources
+          </Button>
+        )}
+      </div>
+      <div className="divide-y divide-border">
+        {resources.map((r) => (
+          <div key={r.id} className="flex items-center justify-between px-6 py-3 hover:bg-muted/20 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Package className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-medium text-sm">{r.resource_type?.name || 'Unknown'}</span>
+            </div>
+            <Badge variant="outline">{r.quantity} units</Badge>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,8 +130,8 @@ export default function EventDetailPage() {
   const cancelMutation = useCancelRegistration();
   const updateMeetingStatus = useUpdateEventMeetingStatus();
   const [showQRModal, setShowQRModal] = useState(false);
-
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
 
   if (isLoading) {
     return (
@@ -269,6 +341,21 @@ export default function EventDetailPage() {
                 isOrganizer={isOwner}
               />
             )}
+
+            {/* Resource Summary Section */}
+            {(role === 'admin' || role === 'organizer') && (
+              <EventResourceSummary
+                eventId={event.id}
+                isPastEvent={isPastEvent}
+                canEdit={canEdit}
+                onReturnClick={() => setShowReturnDialog(true)}
+              />
+            )}
+
+            {/* Audit Log for this event */}
+            {(role === 'admin' || role === 'organizer') && (
+              <ResourceAuditLog eventId={event.id} title="Resource Activity Log" />
+            )}
           </motion.div>
 
           {/* Sidebar */}
@@ -458,6 +545,15 @@ export default function EventDetailPage() {
             />
           )
         }
+        {/* Return Resources Dialog */}
+        {showReturnDialog && (
+          <ReturnResourceDialog
+            open={showReturnDialog}
+            onOpenChange={setShowReturnDialog}
+            eventId={event.id}
+            eventTitle={event.title}
+          />
+        )}
       </div >
     </MainLayout >
   );

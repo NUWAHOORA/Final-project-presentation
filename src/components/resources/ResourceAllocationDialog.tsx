@@ -27,7 +27,7 @@ import {
   Box,
   Info,
 } from 'lucide-react';
-import { useResourceTypes, useAllocateResource, useEventResources, useDeallocateResource } from '@/hooks/useResources';
+import { useResourceTypes, useAllocateResource, useEventResources, useDeallocateResource, useLogResourceAction } from '@/hooks/useResources';
 import { useResourceRequests } from '@/hooks/useResourceRequests';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -60,6 +60,7 @@ export function ResourceAllocationDialog({
   const { data: resourceRequests, isLoading: loadingRequests } = useResourceRequests(eventId);
   const allocateMutation = useAllocateResource();
   const deallocateMutation = useDeallocateResource();
+  const logAction = useLogResourceAction();
 
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -96,6 +97,15 @@ export function ResourceAllocationDialog({
       notes: notes || undefined,
     });
 
+    // Write audit log
+    await logAction.mutateAsync({
+      eventId,
+      resourceTypeId: selectedResource,
+      action: 'allocated',
+      quantity,
+      notes: notes || undefined,
+    });
+
     setSelectedResource(null);
     setQuantity(1);
     setNotes('');
@@ -108,6 +118,14 @@ export function ResourceAllocationDialog({
     await deallocateMutation.mutateAsync({
       allocationId: allocation.id,
       resourceTypeId,
+      quantity: allocation.quantity,
+    });
+
+    // Write audit log
+    await logAction.mutateAsync({
+      eventId,
+      resourceTypeId,
+      action: 'deallocated',
       quantity: allocation.quantity,
     });
   };
@@ -223,12 +241,12 @@ export function ResourceAllocationDialog({
                         <div
                           key={resource.id}
                           className={`p-4 rounded-xl border cursor-pointer transition-all ${isSelected
-                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                              : isAlreadyAllocated
-                                ? 'border-border opacity-60 cursor-not-allowed'
-                                : resource.available_quantity === 0
-                                  ? 'border-destructive/30 bg-destructive/5 cursor-not-allowed'
-                                  : 'border-border hover:border-primary/50'
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : isAlreadyAllocated
+                              ? 'border-border opacity-60 cursor-not-allowed'
+                              : resource.available_quantity === 0
+                                ? 'border-destructive/30 bg-destructive/5 cursor-not-allowed'
+                                : 'border-border hover:border-primary/50'
                             }`}
                           onClick={() => handleSelectResource(resource.id, isAlreadyAllocated)}
                         >
