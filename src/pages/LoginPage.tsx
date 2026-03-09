@@ -26,13 +26,6 @@ const roles = [
     description: 'Create and manage events',
     color: 'border-green-500 bg-green-500/10 text-green-600'
   },
-  {
-    value: 'admin' as UserRole,
-    label: 'Admin',
-    icon: Shield,
-    description: 'Full system administration',
-    color: 'border-purple-500 bg-purple-500/10 text-purple-600'
-  },
 ];
 
 export default function LoginPage() {
