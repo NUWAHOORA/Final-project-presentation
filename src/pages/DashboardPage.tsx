@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
+import { AttendanceTrackingWidget } from '@/components/attendance/AttendanceTrackingWidget';
 import { parseISO, isToday, isFuture } from 'date-fns';
 
 
@@ -204,6 +205,11 @@ export default function DashboardPage() {
               ))}
             </div>
           </motion.div>
+        )}
+
+        {/* Attendance Tracking — admin & organizer only */}
+        {(isAdmin || isOrganizer) && (
+          <AttendanceTrackingWidget events={events || []} />
         )}
 
         {/* Upcoming & Live Meetings Highlight */}
