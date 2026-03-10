@@ -122,6 +122,41 @@ export function useCreateEvent() {
         .single();
 
       if (error) throw error;
+
+      // Create notification for the organizer
+      await supabase.from('notifications').insert([{
+        user_id: user.id,
+        type: 'event_created',
+        title: 'Event Created',
+        message: `Your event "${eventData.title}" has been created and is pending approval.`,
+        event_id: data.id,
+      }]);
+
+      // Fetch all admins to notify them
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (adminRoles && adminRoles.length > 0) {
+        // Filter out the organizer in case they are also an admin
+        const adminIdsToNotify = adminRoles
+          .map(r => r.user_id)
+          .filter(id => id !== user.id);
+
+        if (adminIdsToNotify.length > 0) {
+          const adminNotifications = adminIdsToNotify.map(adminId => ({
+            user_id: adminId,
+            type: 'event_pending_approval',
+            title: 'Event Requires Approval',
+            message: `A new event "${eventData.title}" has been created and requires your approval.`,
+            event_id: data.id,
+          }));
+
+          await supabase.from('notifications').insert(adminNotifications);
+        }
+      }
+
       return data as Event;
     },
     onSuccess: () => {
@@ -167,6 +202,23 @@ export function useUpdateEventStatus() {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Fetch event details for the notification
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('title, organizer_id')
+        .eq('id', id)
+        .single();
+
+      if (eventData) {
+        await supabase.from('notifications').insert([{
+          user_id: eventData.organizer_id,
+          type: `event_${status}`,
+          title: `Event ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+          message: `Your event "${eventData.title}" has been ${status}.`,
+          event_id: id,
+        }]);
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
