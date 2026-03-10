@@ -35,9 +35,10 @@ interface UsersTableProps {
   currentUserId?: string;
   isAdmin: boolean;
   onDeleteUser: (user: UserWithRole) => void;
+  onEditRole: (user: UserWithRole) => void;
 }
 
-export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: UsersTableProps) {
+export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser, onEditRole }: UsersTableProps) {
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <Table>
@@ -61,7 +62,7 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
             users.map((user) => {
               const RoleIcon = roleIcons[user.role];
               const isCurrentUser = user.user_id === currentUserId;
-              
+
               return (
                 <TableRow key={user.id}>
                   <TableCell>
@@ -104,8 +105,8 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit User</DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem onClick={() => onEditRole(user)}>Edit Role</DropdownMenuItem>
+                          <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onClick={() => onDeleteUser(user)}
                           >

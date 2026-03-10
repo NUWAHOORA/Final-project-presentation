@@ -11,29 +11,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUsers, useDeleteUser, useAddUser, UserWithRole } from '@/hooks/useUsers';
+import { useUsers, useDeleteUser, useAddUser, useUpdateRole, UserWithRole } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { UsersTable } from '@/components/users/UsersTable';
 import { UserStatsCards } from '@/components/users/UserStatsCards';
 import { DeleteUserDialog } from '@/components/users/DeleteUserDialog';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
+import { UpdateRoleDialog } from '@/components/users/UpdateRoleDialog';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [userToUpdate, setUserToUpdate] = useState<UserWithRole | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  
+
   const { data: users = [], isLoading } = useUsers();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { mutate: addUser, isPending: isAdding } = useAddUser();
+  const { mutate: updateRole, isPending: isUpdatingRole } = useUpdateRole();
   const { user, role } = useAuth();
 
   const isAdmin = role === 'admin';
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      u.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -46,6 +49,18 @@ export default function UsersPage() {
     if (userToDelete) {
       deleteUser(userToDelete.user_id, {
         onSuccess: () => setUserToDelete(null)
+      });
+    }
+  };
+
+  const handleEditRole = (userToEdit: UserWithRole) => {
+    setUserToUpdate(userToEdit);
+  };
+
+  const confirmUpdateRole = (newRole: 'admin' | 'organizer' | 'student') => {
+    if (userToUpdate) {
+      updateRole({ userId: userToUpdate.user_id, newRole }, {
+        onSuccess: () => setUserToUpdate(null)
       });
     }
   };
@@ -76,7 +91,7 @@ export default function UsersPage() {
             <p className="text-muted-foreground mt-1">Manage all users and their roles</p>
           </div>
           {isAdmin && (
-            <Button 
+            <Button
               className="gradient-primary text-primary-foreground"
               onClick={() => setShowAddDialog(true)}
             >
@@ -121,11 +136,12 @@ export default function UsersPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <UsersTable 
+          <UsersTable
             users={filteredUsers}
             currentUserId={user?.id}
             isAdmin={isAdmin}
             onDeleteUser={handleDeleteUser}
+            onEditRole={handleEditRole}
           />
         </motion.div>
 
@@ -139,6 +155,15 @@ export default function UsersPage() {
           onOpenChange={(open) => !open && setUserToDelete(null)}
           onConfirm={confirmDelete}
           isDeleting={isDeleting}
+        />
+
+        {/* Update Role Dialog */}
+        <UpdateRoleDialog
+          user={userToUpdate}
+          open={!!userToUpdate}
+          onOpenChange={(open) => !open && setUserToUpdate(null)}
+          onConfirm={confirmUpdateRole}
+          isUpdating={isUpdatingRole}
         />
 
         {/* Add User Dialog */}

@@ -34,7 +34,7 @@ export function useUsers() {
 
       // Combine profiles with roles
       const rolesMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
-      
+
       return (profiles || []).map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
@@ -53,21 +53,21 @@ export function useAddUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: { 
-      name: string; 
-      email: string; 
-      password: string; 
-      role: 'admin' | 'organizer' | 'student' 
+    mutationFn: async (userData: {
+      name: string;
+      email: string;
+      password: string;
+      role: 'admin' | 'organizer' | 'student'
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         throw new Error('Not authenticated');
       }
 
       // Use the admin API via edge function to create user
       const response = await supabase.functions.invoke('create-user', {
-        body: { 
+        body: {
           email: userData.email,
           password: userData.password,
           name: userData.name,
@@ -101,7 +101,7 @@ export function useDeleteUser() {
   return useMutation({
     mutationFn: async (userId: string) => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         throw new Error('Not authenticated');
       }
@@ -126,6 +126,37 @@ export function useDeleteUser() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete user');
+    }
+  });
+}
+
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: 'admin' | 'organizer' | 'student' }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // We can update the user_roles table directly because RLS allows authenticated users (with admin rights checked in DB or via UI) to do so.
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User role updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update user role');
     }
   });
 }
