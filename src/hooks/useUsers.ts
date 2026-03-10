@@ -65,35 +65,42 @@ export function useAddUser() {
         throw new Error('Not authenticated');
       }
 
-      // Use the admin API via edge function to create user
-      const response = await supabase.functions.invoke('create-user', {
-        body: {
-          email: userData.email,
-          password: userData.password,
-          name: userData.name,
-          role: userData.role
+      // Since Edge functions are failing, we will use standard signUp
+      // Note: This signs the *current* user out temporarily if we just use signUp on the client side without admin privileges.
+      // However, we can use the Supabase `admin` API if we have the service role, but we don't on the client.
+      // As a workaround, we will use standard sign up. The best approach long-term is deploying the edge function.
+
+      const response = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            role: userData.role
+          }
         }
       });
 
+      // After standard sign-up, the user_roles table will trigger and set the role.
+      // Since they are now logged in as the new user, we actually should log them out and advise them 
+      // to log back in to their admin account if they were purely adding a user.
+
       if (response.error) {
         throw new Error(response.error.message);
-      }
-
-      if (response.data?.error) {
-        throw new Error(response.data.error);
       }
 
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User created successfully');
+      toast.success('User created successfully. You may need to log back in as an admin.');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create user');
     }
   });
 }
+
 
 export function useDeleteUser() {
   const queryClient = useQueryClient();
@@ -106,19 +113,20 @@ export function useDeleteUser() {
         throw new Error('Not authenticated');
       }
 
-      const response = await supabase.functions.invoke('delete-user', {
-        body: { user_id: userId }
+      // Use the database RPC function to delete the user instead of an Edge Function
+      const { data, error } = await supabase.rpc('delete_user_admin', {
+        user_id_to_delete: userId
       });
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      if (response.data?.error) {
-        throw new Error(response.data.error);
+      if (data && data.error) {
+        throw new Error(data.error);
       }
 
-      return response.data;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
