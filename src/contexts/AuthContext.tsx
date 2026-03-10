@@ -96,7 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = 'student') => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Use the deployed Vercel URL so that email verification works across all devices
+    const redirectUrl = `https://final-project-presentation.vercel.app/`;
 
     const { error } = await supabase.auth.signUp({
       email,
