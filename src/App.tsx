@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 
 import LoginPage from "@/pages/LoginPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/create" element={<CreateEventPage />} />
