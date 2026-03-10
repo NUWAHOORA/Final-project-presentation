@@ -502,6 +502,115 @@ export type Database = {
           },
         ]
       }
+      resource_audit_log: {
+        Row: {
+          action: string
+          condition: string | null
+          event_id: string
+          id: string
+          notes: string | null
+          performed_at: string
+          performed_by: string
+          quantity: number
+          resource_type_id: string
+        }
+        Insert: {
+          action: string
+          condition?: string | null
+          event_id: string
+          id?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by: string
+          quantity: number
+          resource_type_id: string
+        }
+        Update: {
+          action?: string
+          condition?: string | null
+          event_id?: string
+          id?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string
+          quantity?: number
+          resource_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_audit_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_audit_log_resource_type_id_fkey"
+            columns: ["resource_type_id"]
+            isOneToOne: false
+            referencedRelation: "resource_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_returns: {
+        Row: {
+          condition: "good" | "damaged" | "needs_repair" | "lost"
+          event_id: string
+          event_resource_id: string
+          id: string
+          notes: string | null
+          quantity_returned: number
+          resource_type_id: string
+          returned_at: string
+          returned_by: string
+        }
+        Insert: {
+          condition: "good" | "damaged" | "needs_repair" | "lost"
+          event_id: string
+          event_resource_id: string
+          id?: string
+          notes?: string | null
+          quantity_returned: number
+          resource_type_id: string
+          returned_at?: string
+          returned_by: string
+        }
+        Update: {
+          condition?: "good" | "damaged" | "needs_repair" | "lost"
+          event_id?: string
+          event_resource_id?: string
+          id?: string
+          notes?: string | null
+          quantity_returned?: number
+          resource_type_id?: string
+          returned_at?: string
+          returned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_returns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_returns_event_resource_id_fkey"
+            columns: ["event_resource_id"]
+            isOneToOne: false
+            referencedRelation: "event_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_returns_resource_type_id_fkey"
+            columns: ["resource_type_id"]
+            isOneToOne: false
+            referencedRelation: "resource_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_types: {
         Row: {
           available_quantity: number
