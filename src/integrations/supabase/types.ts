@@ -740,7 +740,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "organizer" | "student"
+      app_role: "admin" | "organizer" | "user"
       event_category:
       | "academic"
       | "social"

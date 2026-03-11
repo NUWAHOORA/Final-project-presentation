@@ -1,32 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, BookOpen, KeyRound } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, KeyRound } from 'lucide-react';
 import ucuLogo from '@/assets/ucu-logo.png';
 import campusBg from '@/assets/campus-bg.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-
-const roles = [
-  {
-    value: 'student' as UserRole,
-    label: 'Student',
-    icon: BookOpen,
-    description: 'Browse and register for events',
-    color: 'border-blue-500 bg-blue-500/10 text-blue-600'
-  },
-  {
-    value: 'organizer' as UserRole,
-    label: 'Organizer',
-    icon: Users,
-    description: 'Create and manage events',
-    color: 'border-green-500 bg-green-500/10 text-green-600'
-  },
-];
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -34,7 +16,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, resetPassword, isAuthenticated } = useAuth();
@@ -70,7 +51,7 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, name, selectedRole);
+        const { error } = await signUp(email, password, name, 'user');
         if (error) {
           toast.error(error.message || 'Failed to sign up');
         } else {

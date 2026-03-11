@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'admin' | 'organizer' | 'student';
+export type UserRole = 'admin' | 'organizer' | 'user';
 
 interface Profile {
   id: string;
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole = 'student') => {
+  const signUp = async (email: string, password: string, name: string, role: UserRole = 'user') => {
     // Use the deployed Vercel URL so that email verification works across all devices
     const redirectUrl = `https://final-project-presentation.vercel.app/`;
 

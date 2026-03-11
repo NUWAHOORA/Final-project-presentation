@@ -57,7 +57,7 @@ export default function UsersPage() {
     setUserToUpdate(userToEdit);
   };
 
-  const confirmUpdateRole = (newRole: 'admin' | 'organizer' | 'student') => {
+  const confirmUpdateRole = (newRole: 'admin' | 'organizer' | 'user') => {
     if (userToUpdate) {
       updateRole({ userId: userToUpdate.user_id, newRole }, {
         onSuccess: () => setUserToUpdate(null)
@@ -65,7 +65,7 @@ export default function UsersPage() {
     }
   };
 
-  const handleAddUser = (data: { name: string; email: string; password: string; role: 'admin' | 'organizer' | 'student' }) => {
+  const handleAddUser = (data: { name: string; email: string; password: string; role: 'admin' | 'organizer' | 'user' }) => {
     addUser(data, {
       onSuccess: () => setShowAddDialog(false)
     });
@@ -125,7 +125,7 @@ export default function UsersPage() {
               <SelectItem value="all">All Roles</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="organizer">Organizer</SelectItem>
-              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="user">User</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>

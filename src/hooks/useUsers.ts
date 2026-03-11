@@ -10,7 +10,7 @@ export interface UserWithRole {
   department: string | null;
   avatar_url: string | null;
   created_at: string;
-  role: 'admin' | 'organizer' | 'student';
+  role: 'admin' | 'organizer' | 'user';
 }
 
 export function useUsers() {
@@ -43,7 +43,7 @@ export function useUsers() {
         department: profile.department,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
-        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'student') || 'student'
+        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'user') || 'user'
       }));
     }
   });
@@ -57,7 +57,7 @@ export function useAddUser() {
       name: string;
       email: string;
       password: string;
-      role: 'admin' | 'organizer' | 'student'
+      role: 'admin' | 'organizer' | 'user'
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -142,7 +142,7 @@ export function useUpdateRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: 'admin' | 'organizer' | 'student' }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: 'admin' | 'organizer' | 'user' }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -152,7 +152,7 @@ export function useUpdateRole() {
       // We can update the user_roles table directly because RLS allows authenticated users (with admin rights checked in DB or via UI) to do so.
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: newRole })
+        .update({ role: newRole as string })
         .eq('user_id', userId);
 
       if (error) {

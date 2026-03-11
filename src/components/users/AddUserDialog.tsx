@@ -13,26 +13,26 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-type UserRole = 'admin' | 'organizer' | 'student';
+type UserRole = 'admin' | 'organizer' | 'user';
 
 const roles = [
-  { 
-    value: 'student' as UserRole, 
-    label: 'Student', 
+  {
+    value: 'user' as UserRole,
+    label: 'User',
     icon: BookOpen,
-    description: 'Browse and register for events',
+    description: 'Browse and attend events',
     color: 'border-blue-500 bg-blue-500/10 text-blue-600'
   },
-  { 
-    value: 'organizer' as UserRole, 
-    label: 'Organizer', 
+  {
+    value: 'organizer' as UserRole,
+    label: 'Organizer',
     icon: Users,
     description: 'Create and manage events',
     color: 'border-green-500 bg-green-500/10 text-green-600'
   },
-  { 
-    value: 'admin' as UserRole, 
-    label: 'Admin', 
+  {
+    value: 'admin' as UserRole,
+    label: 'Admin',
     icon: Shield,
     description: 'Full system access',
     color: 'border-purple-500 bg-purple-500/10 text-purple-600'
@@ -50,7 +50,7 @@ export function AddUserDialog({ open, onOpenChange, onAddUser, isLoading }: AddU
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +61,7 @@ export function AddUserDialog({ open, onOpenChange, onAddUser, isLoading }: AddU
     setName('');
     setEmail('');
     setPassword('');
-    setSelectedRole('student');
+    setSelectedRole('user');
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -139,8 +139,8 @@ export function AddUserDialog({ open, onOpenChange, onAddUser, isLoading }: AddU
                     onClick={() => setSelectedRole(role.value)}
                     className={cn(
                       "flex flex-col items-center p-3 rounded-lg border-2 transition-all duration-200",
-                      isSelected 
-                        ? role.color + " border-current" 
+                      isSelected
+                        ? role.color + " border-current"
                         : "border-border hover:border-muted-foreground/50 bg-card"
                     )}
                   >
