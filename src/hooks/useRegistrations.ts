@@ -113,6 +113,64 @@ export function useEventRegistrations(eventId: string) {
   });
 }
 
+// Get recent registrations across events (for admins/organizers)
+export function useRecentRegistrations(limit = 5) {
+  const { user, role } = useAuth();
+  const isAdmin = role === 'admin';
+
+  return useQuery({
+    queryKey: ['recent-registrations', user?.id, limit],
+    queryFn: async () => {
+      if (!user) return [];
+
+      let query = supabase
+        .from('registrations')
+        .select(`
+          *,
+          event:events (
+            id,
+            title,
+            organizer_id
+          )
+        `)
+        .order('registered_at', { ascending: false })
+        .limit(limit);
+
+      // If organizer, only show registrations for their events
+      // (Supabase RLS handles this, but we can be explicit if needed)
+      // Actually RLS for registrations_select is currently 'true' for authenticated.
+      // We should probably rely on RLS if possible, but let's filter in JS if RLS is too broad.
+
+      const { data: registrations, error } = await query;
+
+      if (error) throw error;
+
+      // Further filter for organizers if RLS allows more than they should see
+      const filteredRegistrations = isAdmin
+        ? registrations
+        : registrations?.filter(r => r.event?.organizer_id === user.id) || [];
+
+      if (filteredRegistrations.length === 0) return [];
+
+      // Get user profiles for registrations
+      const userIds = [...new Set(filteredRegistrations.map(r => r.user_id))];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, avatar_url')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      return filteredRegistrations.map(reg => ({
+        ...reg,
+        user: profileMap.get(reg.user_id)
+      }));
+    },
+    enabled: !!user && (role === 'admin' || role === 'organizer'),
+  });
+}
+
 // Register for an event
 export function useRegisterForEvent() {
   const queryClient = useQueryClient();
