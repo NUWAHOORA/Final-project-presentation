@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, User, Mail, Shield, Users, BookOpen } from 'lucide-react';
+import { Loader2, User, Mail, Shield, Users, BookOpen, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
