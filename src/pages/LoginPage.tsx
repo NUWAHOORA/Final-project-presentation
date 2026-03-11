@@ -186,36 +186,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Select Your Role</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {roles.map((role) => {
-                      const Icon = role.icon;
-                      const isSelected = selectedRole === role.value;
-                      return (
-                        <button
-                          key={role.value}
-                          type="button"
-                          onClick={() => setSelectedRole(role.value)}
-                          className={cn(
-                            "flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200",
-                            isSelected
-                              ? role.color + " border-current"
-                              : "border-border hover:border-muted-foreground/50 bg-card"
-                          )}
-                        >
-                          <Icon className={cn("w-6 h-6 mb-1", isSelected ? "" : "text-muted-foreground")} />
-                          <span className={cn("text-sm font-medium", isSelected ? "" : "text-muted-foreground")}>
-                            {role.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center mt-1">
-                    {roles.find(r => r.value === selectedRole)?.description}
-                  </p>
-                </div>
               </>
             )}
 

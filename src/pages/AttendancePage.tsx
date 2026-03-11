@@ -99,7 +99,7 @@ export default function AttendancePage() {
           variant: "destructive",
         });
         setRecentScans(prev => [
-          { name: 'Unknown Student', time: 'Just now', success: false },
+          { name: 'Unknown Attendee', time: 'Just now', success: false },
           ...prev.slice(0, 9)
         ]);
         return;
@@ -132,7 +132,7 @@ export default function AttendancePage() {
         .eq('user_id', registration.user_id)
         .single();
 
-      const studentName = profile?.name || 'Student';
+      const attendeeName = profile?.name || 'Attendee';
 
       // 5. Mark attendance
       const { error: updateError } = await supabase
@@ -147,11 +147,11 @@ export default function AttendancePage() {
 
       toast({
         title: "Check-in successful",
-        description: `${studentName} has been checked in.`,
+        description: `${attendeeName} has been checked in.`,
       });
 
       setRecentScans(prev => [
-        { name: studentName, time: 'Just now', success: true },
+        { name: attendeeName, time: 'Just now', success: true },
         ...prev.slice(0, 9)
       ]);
 
@@ -231,10 +231,10 @@ export default function AttendancePage() {
                   </div>
 
                   <div className="mt-6">
-                    <p className="text-sm text-muted-foreground mb-2">Or enter Student ID manually:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Or enter ID manually:</p>
                     <div className="flex gap-3">
                       <Input
-                        placeholder="Enter Student ID"
+                        placeholder="Enter User ID"
                         value={manualCode}
                         onChange={(e) => setManualCode(e.target.value)}
                         className="h-11"
@@ -256,7 +256,7 @@ export default function AttendancePage() {
                     <div>
                       <h3 className="text-lg font-semibold">Event Check-in QR</h3>
                       <p className="text-muted-foreground text-sm">
-                        Display this QR code for student self check-in
+                        Display this QR code for user self check-in
                       </p>
                     </div>
                     {event?.status !== 'live' && (

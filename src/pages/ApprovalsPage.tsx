@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Clock, Loader2, Package, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Loader2, Package, AlertTriangle, User } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +14,11 @@ function EventResourceStatus({ eventId }: { eventId: string }) {
   const hasResources = resources && resources.length > 0;
 
   return (
-    <Badge 
-      className={`flex items-center gap-1 border-0 ${
-        hasResources 
-          ? 'bg-success/10 text-success' 
-          : 'bg-destructive/10 text-destructive'
-      }`}
+    <Badge
+      className={`flex items-center gap-1 border-0 ${hasResources
+        ? 'bg-success/10 text-success'
+        : 'bg-destructive/10 text-destructive'
+        }`}
     >
       {hasResources ? (
         <>
@@ -111,15 +110,31 @@ export default function ApprovalsPage() {
                         <Clock className="w-3 h-3" />
                         Pending Review
                       </Badge>
+                      {event.organizer_role === 'user' && (
+                        <Badge className="bg-purple-500/10 text-purple-600 border-purple-200 flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Organizer Request
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="capitalize">
                         {event.category}
                       </Badge>
                       <EventResourceStatus eventId={event.id} />
                     </div>
                     <h3 className="text-xl font-semibold mb-1">{event.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-2">
-                      Submitted by {event.organizer_name}
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-muted-foreground text-sm">
+                        Submitted by <span className="font-medium text-foreground">{event.organizer_name}</span>
+                      </p>
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5 uppercase tracking-wider">
+                        {event.organizer_role}
+                      </Badge>
+                    </div>
+                    {event.organizer_role === 'user' && (
+                      <p className="text-xs text-purple-600 mb-2 italic">
+                        * Approving this event will promote this user to the Organizer role.
+                      </p>
+                    )}
                     <p className="text-muted-foreground text-sm line-clamp-2">
                       {event.description}
                     </p>

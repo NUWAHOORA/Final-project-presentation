@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'organizer' | 'student';
+export type UserRole = 'admin' | 'organizer' | 'user';
 
 export type EventStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'live';
 

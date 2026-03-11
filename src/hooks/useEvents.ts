@@ -24,6 +24,7 @@ export interface Event {
   created_at: string;
   updated_at: string;
   organizer_name?: string;
+  organizer_role?: 'admin' | 'organizer' | 'user';
 }
 
 export function useEvents() {
@@ -37,18 +38,26 @@ export function useEvents() {
 
       if (error) throw error;
 
-      // Fetch organizer names
+      // Fetch organizer details (name and role)
       const organizerIds = [...new Set(events?.map(e => e.organizer_id) || [])];
+
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, name')
         .in('user_id', organizerIds);
 
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', organizerIds);
+
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
+      const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
 
       return events?.map(event => ({
         ...event,
-        organizer_name: profileMap.get(event.organizer_id) || 'Unknown'
+        organizer_name: profileMap.get(event.organizer_id) || 'Unknown',
+        organizer_role: roleMap.get(event.organizer_id) as 'admin' | 'organizer' | 'user' || 'user'
       })) as Event[];
     },
   });
@@ -211,21 +220,39 @@ export function useUpdateEventStatus() {
         .single();
 
       if (eventData) {
+        // Automatically promote user to organizer if they are currently just a 'user'
+        const { data: currentRoleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', eventData.organizer_id)
+          .single();
+
+        if (currentRoleData && currentRoleData.role === 'user' && status === 'approved') {
+          await supabase
+            .from('user_roles')
+            .update({ role: 'organizer' })
+            .eq('user_id', eventData.organizer_id);
+        }
+
         await supabase.from('notifications').insert([{
           user_id: eventData.organizer_id,
           type: `event_${status}`,
           title: `Event ${status === 'approved' ? 'Approved' : 'Rejected'}`,
-          message: `Your event "${eventData.title}" has been ${status}.`,
+          message: `Your event "${eventData.title}" has been ${status}${status === 'approved' ? '. You have also been promoted to Organizer.' : '.'}`,
           event_id: id,
         }]);
       }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+
+      const isPromotion = status === 'approved'; // Logic for promotion is handled inside mutationFn
+
       toast({
         title: status === 'approved' ? 'Event Approved' : 'Event Rejected',
         description: status === 'approved'
-          ? 'The event is now visible to students.'
+          ? 'The event is now visible to all users. The requester has been promoted to Organizer.'
           : 'The event has been rejected.',
         variant: status === 'approved' ? 'default' : 'destructive',
       });

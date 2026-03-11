@@ -394,7 +394,7 @@ export default function EventDetailPage() {
                 <p className="text-sm text-warning mb-4">Only {spotsLeft} spots left!</p>
               )}
 
-              {role === 'student' && event.status === 'approved' && (
+              {role === 'user' && event.status === 'approved' && (
                 <>
                   {isPastEvent ? (
                     // Event is in the past — show info only
@@ -495,7 +495,7 @@ export default function EventDetailPage() {
           </motion.div>
         </div>
 
-        {/* QR Code Modal for Students */}
+        {/* QR Code Modal for Users */}
         <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>

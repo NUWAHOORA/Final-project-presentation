@@ -10,8 +10,10 @@ import {
   FileText,
   Tags,
   Check,
-  Loader2
+  Loader2,
+  Info
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +47,8 @@ export default function CreateEventPage() {
   const navigate = useNavigate();
   const createEventMutation = useCreateEvent();
   const createResourceRequestsMutation = useCreateBulkResourceRequests();
+  const { role } = useAuth();
+  const isUser = role === 'user';
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -113,6 +117,23 @@ export default function CreateEventPage() {
           <p className="text-muted-foreground mt-1">
             Fill in the details below to submit your event for approval
           </p>
+
+          {isUser && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-6 p-4 bg-purple-500/10 border border-purple-200 rounded-xl flex gap-3 items-start"
+            >
+              <Info className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-purple-900">Organizer Request</h4>
+                <p className="text-sm text-purple-700">
+                  Submitting this event also acts as a request to become an <strong>Organizer</strong>.
+                  Once the admin approves your event, you will gain access to organizer tools and your role will be upgraded automatically.
+                </p>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Form */}

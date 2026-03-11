@@ -19,7 +19,7 @@ export default function MeetingsPage() {
   const { role } = useAuth();
   const [activeTab, setActiveTab] = useState('upcoming');
 
-  // Admins/organizers see all meetings, students see their invited meetings
+  // Admins/organizers see all meetings, users see their invited meetings
   const { data: allMeetings, isLoading: loadingAll } = useMeetings();
   const { data: userMeetings, isLoading: loadingUser } = useUserMeetings();
 
@@ -99,7 +99,7 @@ export default function MeetingsPage() {
                   meeting={meeting}
                   onJoin={handleJoin}
                   onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
-                  onAccept={role === 'student' ? handleAccept : undefined}
+                  onAccept={role === 'user' ? handleAccept : undefined}
                   onDecline={role === 'student' ? handleDecline : undefined}
                 />
               ))}
@@ -145,8 +145,8 @@ export default function MeetingsPage() {
                           meeting={meeting}
                           onJoin={handleJoin}
                           onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
-                          onAccept={role === 'student' ? handleAccept : undefined}
-                          onDecline={role === 'student' ? handleDecline : undefined}
+                          onAccept={role === 'user' ? handleAccept : undefined}
+                          onDecline={role === 'user' ? handleDecline : undefined}
                         />
                       ))}
                   </div>

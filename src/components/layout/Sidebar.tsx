@@ -58,7 +58,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
     { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
   ],
-  student: [
+  user: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'Browse Events', path: '/events' },
     { icon: Video, label: 'Meetings', path: '/meetings' },

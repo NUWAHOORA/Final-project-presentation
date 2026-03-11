@@ -23,7 +23,7 @@ export default function EventsPage() {
 
   const filteredEvents = events?.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+      (event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
     return matchesSearch && matchesCategory;
   }) || [];
@@ -42,7 +42,7 @@ export default function EventsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-bold"
             >
-              {role === 'student' ? 'Browse Events' : 'Events'}
+              {role === 'user' ? 'Browse Events' : 'Events'}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -86,11 +86,10 @@ export default function EventsPage() {
               <Badge
                 key={category}
                 variant={selectedCategory === category ? 'default' : 'outline'}
-                className={`cursor-pointer capitalize px-4 py-2 transition-all ${
-                  selectedCategory === category 
-                    ? 'gradient-primary text-white border-0' 
+                className={`cursor-pointer capitalize px-4 py-2 transition-all ${selectedCategory === category
+                    ? 'gradient-primary text-white border-0'
                     : 'hover:bg-muted'
-                }`}
+                  }`}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -127,13 +126,13 @@ export default function EventsPage() {
         {!isLoading && upcomingEvents.length > 0 && (
           <>
             <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-            <div className={viewMode === 'grid' 
+            <div className={viewMode === 'grid'
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10'
               : 'flex flex-col gap-4 mb-10'
             }>
               {upcomingEvents.map((event, index) => (
-                <EventCard 
-                  key={event.id} 
+                <EventCard
+                  key={event.id}
                   event={{
                     id: event.id,
                     title: event.title,
@@ -151,8 +150,8 @@ export default function EventsPage() {
                     imageUrl: event.image_url || undefined,
                     qrCode: event.qr_code || undefined,
                     createdAt: event.created_at
-                  }} 
-                  index={index} 
+                  }}
+                  index={index}
                 />
               ))}
             </div>
@@ -163,13 +162,13 @@ export default function EventsPage() {
         {!isLoading && pastEvents.length > 0 && (
           <>
             <h2 className="text-xl font-semibold mb-4 text-muted-foreground">Past Events</h2>
-            <div className={viewMode === 'grid' 
+            <div className={viewMode === 'grid'
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75'
               : 'flex flex-col gap-4 opacity-75'
             }>
               {pastEvents.map((event, index) => (
-                <EventCard 
-                  key={event.id} 
+                <EventCard
+                  key={event.id}
                   event={{
                     id: event.id,
                     title: event.title,
@@ -187,8 +186,8 @@ export default function EventsPage() {
                     imageUrl: event.image_url || undefined,
                     qrCode: event.qr_code || undefined,
                     createdAt: event.created_at
-                  }} 
-                  index={index} 
+                  }}
+                  index={index}
                 />
               ))}
             </div>
