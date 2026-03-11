@@ -10,6 +10,7 @@ import {
   Loader2,
   Download,
   Video,
+  Ticket,
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';

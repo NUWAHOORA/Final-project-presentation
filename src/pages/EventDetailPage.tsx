@@ -39,8 +39,9 @@ import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
 import { ReturnResourceDialog } from '@/components/resources/ReturnResourceDialog';
 import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
-import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { useIsRegistered, useRegisterForEvent, useCancelRegistration, useEventRegistrations } from '@/hooks/useRegistrations';
 import { useEventResources } from '@/hooks/useResources';
+import { Mail, ShieldCheck } from 'lucide-react';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -113,6 +114,101 @@ function EventResourceSummary({
             <Badge variant="outline">{r.quantity} units</Badge>
           </div>
         ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Inline sub-component: Registrant List
+function RegistrantList({ eventId }: { eventId: string }) {
+  const { data: registrants, isLoading } = useEventRegistrations(eventId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!registrants || registrants.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-2xl border border-border p-8 text-center mt-6"
+      >
+        <Users className="w-10 h-10 mx-auto text-muted-foreground opacity-20 mb-3" />
+        <h3 className="font-semibold text-lg">No Registrants Yet</h3>
+        <p className="text-muted-foreground text-sm">Once people sign up, they will appear here.</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card rounded-2xl border border-border overflow-hidden mt-6"
+    >
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold text-lg">Event Registrants</h3>
+          <Badge variant="secondary" className="ml-2">{registrants.length} total</Badge>
+        </div>
+        <Button variant="ghost" size="sm" className="text-xs">
+          Export List
+        </Button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/10 text-muted-foreground text-left border-b border-border">
+              <th className="px-6 py-3 font-semibold">User</th>
+              <th className="px-6 py-3 font-semibold">Status</th>
+              <th className="px-6 py-3 font-semibold">Registered At</th>
+              <th className="px-6 py-3 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {registrants.map((reg) => (
+              <tr key={reg.id} className="hover:bg-muted/20 transition-colors">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                      {reg.user?.name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <p className="font-medium">{reg.user?.name || 'Anonymous'}</p>
+                      <p className="text-xs text-muted-foreground">{reg.user?.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  {reg.attended ? (
+                    <Badge className="bg-success/10 text-success border-0 hover:bg-success/20">
+                      <ShieldCheck className="w-3 h-3 mr-1" /> Attended
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Pending
+                    </Badge>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-muted-foreground">
+                  {new Date(reg.registered_at).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                    <Mail className="w-4 h-4" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </motion.div>
   );
@@ -355,6 +451,11 @@ export default function EventDetailPage() {
             {/* Audit Log for this event */}
             {(role === 'admin' || role === 'organizer') && (
               <ResourceAuditLog eventId={event.id} title="Resource Activity Log" />
+            )}
+
+            {/* Registrants List — admin & organizer only */}
+            {(role === 'admin' || role === 'organizer') && (
+              <RegistrantList eventId={event.id} />
             )}
           </motion.div>
 
