@@ -48,7 +48,7 @@ export default function CreateEventPage() {
   const createEventMutation = useCreateEvent();
   const createResourceRequestsMutation = useCreateBulkResourceRequests();
   const { role } = useAuth();
-  const isUser = role === 'user';
+  const isUser = role === 'user' || role === 'student';
   const [formData, setFormData] = useState({
     title: '',
     description: '',

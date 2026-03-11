@@ -99,8 +99,8 @@ export default function MeetingsPage() {
                   meeting={meeting}
                   onJoin={handleJoin}
                   onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
-                  onAccept={role === 'user' ? handleAccept : undefined}
-                  onDecline={role === 'user' ? handleDecline : undefined}
+                  onAccept={((role as any) === 'user' || (role as any) === 'student') ? handleAccept : undefined}
+                  onDecline={((role as any) === 'user' || (role as any) === 'student') ? handleDecline : undefined}
                 />
               ))}
             </div>
@@ -145,8 +145,8 @@ export default function MeetingsPage() {
                           meeting={meeting}
                           onJoin={handleJoin}
                           onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
-                          onAccept={role === 'user' ? handleAccept : undefined}
-                          onDecline={role === 'user' ? handleDecline : undefined}
+                          onAccept={((role as any) === 'user' || (role as any) === 'student') ? handleAccept : undefined}
+                          onDecline={((role as any) === 'user' || (role as any) === 'student') ? handleDecline : undefined}
                         />
                       ))}
                   </div>

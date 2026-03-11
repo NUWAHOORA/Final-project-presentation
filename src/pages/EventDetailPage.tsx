@@ -394,7 +394,7 @@ export default function EventDetailPage() {
                 <p className="text-sm text-warning mb-4">Only {spotsLeft} spots left!</p>
               )}
 
-              {role === 'user' && event.status === 'approved' && (
+              {(role === 'user' || role === 'student') && event.status === 'approved' && (
                 <>
                   {isPastEvent ? (
                     // Event is in the past — show info only

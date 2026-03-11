@@ -42,7 +42,7 @@ export default function EventsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-bold"
             >
-              {role === 'user' ? 'Browse Events' : 'Events'}
+              {(role === 'user' || role === 'student') ? 'Browse Events' : 'Events'}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -87,8 +87,8 @@ export default function EventsPage() {
                 key={category}
                 variant={selectedCategory === category ? 'default' : 'outline'}
                 className={`cursor-pointer capitalize px-4 py-2 transition-all ${selectedCategory === category
-                    ? 'gradient-primary text-white border-0'
-                    : 'hover:bg-muted'
+                  ? 'gradient-primary text-white border-0'
+                  : 'hover:bg-muted'
                   }`}
                 onClick={() => setSelectedCategory(category)}
               >

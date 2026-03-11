@@ -110,7 +110,7 @@ export default function ApprovalsPage() {
                         <Clock className="w-3 h-3" />
                         Pending Review
                       </Badge>
-                      {event.organizer_role === 'user' && (
+                      {((event.organizer_role as any) === 'user' || (event.organizer_role as any) === 'student') && (
                         <Badge className="bg-purple-500/10 text-purple-600 border-purple-200 flex items-center gap-1">
                           <User className="w-3 h-3" />
                           Organizer Request
@@ -130,7 +130,7 @@ export default function ApprovalsPage() {
                         {event.organizer_role}
                       </Badge>
                     </div>
-                    {event.organizer_role === 'user' && (
+                    {(event.organizer_role === 'user' || event.organizer_role === 'student') && (
                       <p className="text-xs text-purple-600 mb-2 italic">
                         * Approving this event will promote this user to the Organizer role.
                       </p>

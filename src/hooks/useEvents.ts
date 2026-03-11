@@ -24,7 +24,7 @@ export interface Event {
   created_at: string;
   updated_at: string;
   organizer_name?: string;
-  organizer_role?: 'admin' | 'organizer' | 'user';
+  organizer_role?: 'admin' | 'organizer' | 'user' | 'student';
 }
 
 export function useEvents() {
@@ -57,7 +57,7 @@ export function useEvents() {
       return events?.map(event => ({
         ...event,
         organizer_name: profileMap.get(event.organizer_id) || 'Unknown',
-        organizer_role: roleMap.get(event.organizer_id) as 'admin' | 'organizer' | 'user' || 'user'
+        organizer_role: roleMap.get(event.organizer_id) as 'admin' | 'organizer' | 'user' | 'student' || 'user'
       })) as Event[];
     },
   });
@@ -227,7 +227,7 @@ export function useUpdateEventStatus() {
           .eq('user_id', eventData.organizer_id)
           .single();
 
-        if (currentRoleData && currentRoleData.role === 'user' && status === 'approved') {
+        if (currentRoleData && ((currentRoleData.role as any) === 'user' || (currentRoleData.role as any) === 'student') && status === 'approved') {
           await supabase
             .from('user_roles')
             .update({ role: 'organizer' })

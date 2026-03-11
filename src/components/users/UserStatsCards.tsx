@@ -15,7 +15,7 @@ export function UserStatsCards({ users }: UserStatsCardsProps) {
           </div>
           <div>
             <p className="text-2xl font-bold text-foreground">
-              {users.filter(u => u.role === 'user').length}
+              {users.filter(u => u.role === 'user' || u.role === 'student').length}
             </p>
             <p className="text-sm text-muted-foreground">Users</p>
           </div>
