@@ -51,9 +51,12 @@ export default function AttendancePage() {
         registrationId = url.searchParams.get('reg');
       }
     } catch {
-      // Not a URL — try legacy ticket:... format
+      // Not a URL — try newer attendance:... format or legacy ticket:... format
       const parts = code.split(':');
-      if (parts.length >= 4 && parts[0] === 'ticket') {
+      if (parts.length >= 2 && parts[0] === 'attendance') {
+        registrationId = parts[1];
+        ticketEventId = selectedEvent; // We look up the event context from what the user selected
+      } else if (parts.length >= 4 && parts[0] === 'ticket') {
         ticketEventId = parts[1];
         registrationId = parts[3];
       }
