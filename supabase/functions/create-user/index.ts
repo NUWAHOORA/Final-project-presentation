@@ -25,7 +25,7 @@ serve(async (req: Request) => {
     // Create Supabase clients
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     // Client with user's token to verify permissions
     const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } }
@@ -70,8 +70,8 @@ serve(async (req: Request) => {
     }
 
     // Validate role
-    const validRoles = ["admin", "organizer", "student"];
-    const userRole = validRoles.includes(role) ? role : "student";
+    const validRoles = ["admin", "organizer", "user", "student"];
+    const userRole = validRoles.includes(role) ? role : "user";
 
     // Create the user with admin API
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -89,14 +89,14 @@ serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        user: { 
-          id: newUser.user.id, 
+      JSON.stringify({
+        success: true,
+        user: {
+          id: newUser.user.id,
           email: newUser.user.email,
           name: name,
           role: userRole
-        } 
+        }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
