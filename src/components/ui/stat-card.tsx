@@ -12,6 +12,7 @@ interface StatCardProps {
   };
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'accent';
   delay?: number;
+  badge?: string | number;
 }
 
 const variantStyles = {
@@ -30,7 +31,7 @@ const iconStyles = {
   accent: 'bg-accent/10 text-accent',
 };
 
-export function StatCard({ title, value, icon: Icon, trend, variant = 'default', delay = 0 }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, variant = 'default', delay = 0, badge }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -55,8 +56,21 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default',
             </p>
           )}
         </div>
-        <div className={cn("p-3 rounded-xl", iconStyles[variant])}>
+        <div className={cn("p-3 rounded-xl relative", iconStyles[variant])}>
           <Icon className="w-6 h-6" />
+          {badge !== undefined && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: delay + 0.3 }}
+              className={cn(
+                "absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-background",
+                variant === 'default' ? "bg-primary text-primary-foreground" : "bg-primary text-white"
+              )}
+            >
+              {badge}
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

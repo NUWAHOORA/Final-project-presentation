@@ -150,6 +150,7 @@ export default function DashboardPage() {
               icon={Users}
               variant="success"
               delay={0.1}
+              badge={totalRegistrations > 0 ? totalRegistrations : undefined}
             />
             <StatCard
               title={isAdmin ? "Pending Approvals" : "My Pending Events"}
