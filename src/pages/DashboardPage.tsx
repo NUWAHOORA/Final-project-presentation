@@ -10,6 +10,7 @@ import {
   Loader2,
   Download,
   Video,
+  ScanLine,
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -23,6 +24,7 @@ import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
 import { parseISO, isToday, isFuture } from 'date-fns';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 
 export default function DashboardPage() {
@@ -32,6 +34,7 @@ export default function DashboardPage() {
   const { data: userMeetings, isLoading: loadingUser } = useUserMeetings();
   const markAttendance = useMarkAttendance();
   const updateStatusMutation = useUpdateEventStatus();
+  const { data: stats } = useDashboardStats();
   const [reportOpen, setReportOpen] = useState(false);
 
   const isAdmin = role === 'admin';
@@ -52,8 +55,8 @@ export default function DashboardPage() {
   // Calculate analytics from real data — role-aware
   const dashboardEvents = isAdmin ? (events || []) : (events?.filter(e => e.organizer_id === profile?.user_id) || []);
   const totalEvents = dashboardEvents.length;
-  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + (e.registered_count || 0), 0);
-  const totalAttended = dashboardEvents.reduce((sum, e) => sum + (e.attended_count || 0), 0);
+  const totalRegistrations = stats?.totalRegistrations || 0;
+  const totalAttended = stats?.totalAttended || 0;
   const rolePendingEvents = dashboardEvents.filter(e => e.status === 'pending');
 
   const greeting = () => {
@@ -112,13 +115,23 @@ export default function DashboardPage() {
               </motion.p>
             </div>
 
-            {/* Admin-only Download Report button */}
+            {/* Admin-only Action Buttons */}
             {role === 'admin' && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
+                className="flex items-center gap-3"
               >
+                <Link to="/attendance">
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 border-primary text-primary hover:bg-primary/5 shadow-sm"
+                  >
+                    <ScanLine className="w-4 h-4" />
+                    Scan Tickets
+                  </Button>
+                </Link>
                 <Button
                   onClick={() => setReportOpen(true)}
                   className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-md"
