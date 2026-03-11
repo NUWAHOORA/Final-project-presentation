@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-type UserRole = 'admin' | 'organizer' | 'user';
+type UserRole = 'admin' | 'organizer' | 'user' | 'student';
 
 const roles = [
   {

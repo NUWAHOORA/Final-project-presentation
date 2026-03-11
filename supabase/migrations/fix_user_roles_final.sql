@@ -42,6 +42,6 @@ BEGIN
 END;
 $$;
 
--- 3. Update existing 'student' roles to 'user' if desired
--- UPDATE user_roles SET role = 'user' WHERE role = 'student';
+-- 3. Update existing 'student' roles to 'user'
+UPDATE user_roles SET role = 'user' WHERE role = 'student';
 -- ALTER TYPE app_role RENAME VALUE 'student' TO 'old_student'; -- Optional cleanup

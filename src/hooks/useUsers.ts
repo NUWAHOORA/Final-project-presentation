@@ -10,7 +10,7 @@ export interface UserWithRole {
   department: string | null;
   avatar_url: string | null;
   created_at: string;
-  role: 'admin' | 'organizer' | 'user';
+  role: 'admin' | 'organizer' | 'user' | 'student';
 }
 
 export function useUsers() {
@@ -43,7 +43,7 @@ export function useUsers() {
         department: profile.department,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
-        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'user') || 'user'
+        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'user' | 'student') || 'user'
       }));
     }
   });
@@ -57,7 +57,7 @@ export function useAddUser() {
       name: string;
       email: string;
       password: string;
-      role: 'admin' | 'organizer' | 'user'
+      role: 'admin' | 'organizer' | 'user' | 'student'
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -114,7 +114,7 @@ export function useDeleteUser() {
       }
 
       // Use the database RPC function to delete the user instead of an Edge Function
-      const { data, error } = await supabase.rpc('delete_user_admin', {
+      const { data, error } = await supabase.rpc('delete_user_admin' as any, {
         user_id_to_delete: userId
       });
 
@@ -122,8 +122,8 @@ export function useDeleteUser() {
         throw new Error(error.message);
       }
 
-      if (data && data.error) {
-        throw new Error(data.error);
+      if (data && (data as any) === 'error') {
+        throw new Error((data as any).error || 'Failed to delete user');
       }
 
       return data;
@@ -142,7 +142,7 @@ export function useUpdateRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: 'admin' | 'organizer' | 'user' }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: 'admin' | 'organizer' | 'user' | 'student' }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -152,7 +152,7 @@ export function useUpdateRole() {
       // We can update the user_roles table directly because RLS allows authenticated users (with admin rights checked in DB or via UI) to do so.
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: newRole as string })
+        .update({ role: newRole as any })
         .eq('user_id', userId);
 
       if (error) {

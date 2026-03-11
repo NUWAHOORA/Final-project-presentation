@@ -21,7 +21,7 @@ interface UpdateRoleDialogProps {
     user: UserWithRole | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onConfirm: (role: 'admin' | 'organizer' | 'user') => void;
+    onConfirm: (role: 'admin' | 'organizer' | 'user' | 'student') => void;
     isUpdating: boolean;
 }
 
@@ -32,7 +32,7 @@ export function UpdateRoleDialog({
     onConfirm,
     isUpdating,
 }: UpdateRoleDialogProps) {
-    const [role, setRole] = useState<'admin' | 'organizer' | 'user'>('user');
+    const [role, setRole] = useState<'admin' | 'organizer' | 'user' | 'student'>('user');
 
     useEffect(() => {
         if (user) {
@@ -58,7 +58,7 @@ export function UpdateRoleDialog({
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Role</label>
-                            <Select value={role} onValueChange={(v: 'admin' | 'organizer' | 'user') => setRole(v)}>
+                            <Select value={role} onValueChange={(v: 'admin' | 'organizer' | 'user' | 'student') => setRole(v)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
@@ -66,6 +66,7 @@ export function UpdateRoleDialog({
                                     <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="organizer">Organizer</SelectItem>
                                     <SelectItem value="user">User</SelectItem>
+                                    {role === 'student' && <SelectItem value="student">Student (Legacy)</SelectItem>}
                                 </SelectContent>
                             </Select>
                         </div>
