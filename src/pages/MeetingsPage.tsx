@@ -100,7 +100,7 @@ export default function MeetingsPage() {
                   onJoin={handleJoin}
                   onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
                   onAccept={role === 'user' ? handleAccept : undefined}
-                  onDecline={role === 'student' ? handleDecline : undefined}
+                  onDecline={role === 'user' ? handleDecline : undefined}
                 />
               ))}
             </div>
