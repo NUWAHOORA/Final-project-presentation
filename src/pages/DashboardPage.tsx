@@ -147,7 +147,6 @@ export default function DashboardPage() {
               icon={Users}
               variant="success"
               delay={0.1}
-              badge={totalRegistrations > 0 ? totalRegistrations : undefined}
             />
             <StatCard
               title={isAdmin ? "Pending Approvals" : "My Pending Events"}
@@ -157,12 +156,11 @@ export default function DashboardPage() {
               delay={0.2}
             />
             <StatCard
-              title="Total Attendance"
-              value={totalAttended.toLocaleString()}
+              title="Total Attendance Tracking"
+              value={`${totalAttended} / ${totalRegistrations}`}
               icon={CheckCircle}
               variant="accent"
               delay={0.3}
-              badge={totalAttended > 0 ? totalAttended : undefined}
             />
           </div>
         )}
