@@ -67,6 +67,15 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
     { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
   ],
+  student: [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+    { icon: Calendar, label: 'Browse Events', path: '/events' },
+    { icon: Video, label: 'Meetings', path: '/meetings' },
+    { icon: CheckCircle, label: 'My Registrations', path: '/registrations' },
+    { icon: QrCode, label: 'My Tickets', path: '/tickets' },
+    { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
+    { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
+  ],
 };
 
 interface SidebarProps {

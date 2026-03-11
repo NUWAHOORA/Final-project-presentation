@@ -37,6 +37,13 @@ const roles = [
     description: 'Full system access',
     color: 'border-purple-500 bg-purple-500/10 text-purple-600'
   },
+  {
+    value: 'student' as UserRole,
+    label: 'Student',
+    icon: GraduationCap,
+    description: 'Standard student access',
+    color: 'border-orange-500 bg-orange-500/10 text-orange-600'
+  },
 ];
 
 interface AddUserDialogProps {

@@ -126,6 +126,7 @@ export default function UsersPage() {
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="organizer">Organizer</SelectItem>
               <SelectItem value="user">User</SelectItem>
+              <SelectItem value="student">Student</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
