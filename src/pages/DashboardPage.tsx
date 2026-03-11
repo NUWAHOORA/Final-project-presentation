@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar,
+  Users,
   Clock,
   CheckCircle,
   ArrowRight,
@@ -51,6 +52,8 @@ export default function DashboardPage() {
   // Calculate analytics from real data — role-aware
   const dashboardEvents = isAdmin ? (events || []) : (events?.filter(e => e.organizer_id === profile?.user_id) || []);
   const totalEvents = dashboardEvents.length;
+  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + (e.registered_count || 0), 0);
+  const totalAttended = dashboardEvents.reduce((sum, e) => sum + (e.attended_count || 0), 0);
   const rolePendingEvents = dashboardEvents.filter(e => e.status === 'pending');
 
   const greeting = () => {
@@ -130,7 +133,7 @@ export default function DashboardPage() {
 
         {/* Stats Grid — admin and organizer */}
         {(isAdmin || isOrganizer) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Total Events"
               value={totalEvents}
@@ -139,11 +142,27 @@ export default function DashboardPage() {
               delay={0}
             />
             <StatCard
+              title="Total Registrations"
+              value={totalRegistrations.toLocaleString()}
+              icon={Users}
+              variant="success"
+              delay={0.1}
+              badge={totalRegistrations > 0 ? totalRegistrations : undefined}
+            />
+            <StatCard
               title={isAdmin ? "Pending Approvals" : "My Pending Events"}
               value={rolePendingEvents.length}
               icon={Clock}
               variant="warning"
               delay={0.2}
+            />
+            <StatCard
+              title="Total Attendance"
+              value={totalAttended.toLocaleString()}
+              icon={CheckCircle}
+              variant="accent"
+              delay={0.3}
+              badge={totalAttended > 0 ? totalAttended : undefined}
             />
           </div>
         )}
