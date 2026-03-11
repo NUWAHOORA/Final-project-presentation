@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   ScanLine,
@@ -26,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QRScanner } from '@/components/attendance/QRScanner';
 
 export default function AttendancePage() {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState('');
   const [manualCode, setManualCode] = useState('');
@@ -157,6 +159,7 @@ export default function AttendancePage() {
 
       // Refresh statistics
       refetchRegistrations();
+      queryClient.invalidateQueries({ queryKey: ['events'] });
 
     } catch (error) {
       console.error('Error marking attendance:', error);

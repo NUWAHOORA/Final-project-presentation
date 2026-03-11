@@ -56,7 +56,8 @@ export default function DashboardPage() {
   // Calculate analytics from real data — role-aware
   const dashboardEvents = isAdmin ? (events || []) : (events?.filter(e => e.organizer_id === profile?.user_id) || []);
   const totalEvents = dashboardEvents.length;
-  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + e.registered_count, 0);
+  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + (e.registered_count || 0), 0);
+  const totalAttended = dashboardEvents.reduce((sum, e) => sum + (e.attended_count || 0), 0);
   const rolePendingEvents = dashboardEvents.filter(e => e.status === 'pending');
 
   const greeting = () => {
@@ -157,7 +158,15 @@ export default function DashboardPage() {
               value={rolePendingEvents.length}
               icon={Clock}
               variant="warning"
+              delay={0.2}
+            />
+            <StatCard
+              title="Total Attendance"
+              value={totalAttended.toLocaleString()}
+              icon={CheckCircle}
+              variant="accent"
               delay={0.3}
+              badge={totalAttended > 0 ? totalAttended : undefined}
             />
           </div>
         )}
