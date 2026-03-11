@@ -50,9 +50,11 @@ export default function DashboardPage() {
   }).slice(0, 3) || [];
 
 
-  // Calculate analytics from real data
-  const totalEvents = events?.length || 0;
-  const totalRegistrations = events?.reduce((sum, e) => sum + e.registered_count, 0) || 0;
+  // Calculate analytics from real data — role-aware
+  const dashboardEvents = isAdmin ? (events || []) : (events?.filter(e => e.organizer_id === profile?.user_id) || []);
+  const totalEvents = dashboardEvents.length;
+  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + e.registered_count, 0);
+  const rolePendingEvents = dashboardEvents.filter(e => e.status === 'pending');
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -129,8 +131,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Grid — admin only */}
-        {role === 'admin' && (
+        {/* Stats Grid — admin and organizer */}
+        {(isAdmin || isOrganizer) && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Total Events"
@@ -147,8 +149,8 @@ export default function DashboardPage() {
               delay={0.1}
             />
             <StatCard
-              title="Pending Approvals"
-              value={pendingEvents.length}
+              title={isAdmin ? "Pending Approvals" : "My Pending Events"}
+              value={rolePendingEvents.length}
               icon={Clock}
               variant="warning"
               delay={0.3}
