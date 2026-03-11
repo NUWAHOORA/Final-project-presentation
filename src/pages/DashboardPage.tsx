@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar,
-  Users,
   Clock,
   CheckCircle,
   ArrowRight,
@@ -10,7 +9,6 @@ import {
   Loader2,
   Download,
   Video,
-  Ticket,
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -22,9 +20,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
-import { useRecentRegistrations } from '@/hooks/useRegistrations';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
-import { AttendanceTrackingWidget } from '@/components/attendance/AttendanceTrackingWidget';
 import { parseISO, isToday, isFuture } from 'date-fns';
 
 
@@ -33,7 +29,6 @@ export default function DashboardPage() {
   const { data: events, isLoading: eventsLoading } = useEvents();
   const { data: allMeetings, isLoading: loadingAll } = useMeetings();
   const { data: userMeetings, isLoading: loadingUser } = useUserMeetings();
-  const { data: recentRegistrations, isLoading: registrationsLoading } = useRecentRegistrations(5);
   const markAttendance = useMarkAttendance();
   const updateStatusMutation = useUpdateEventStatus();
   const [reportOpen, setReportOpen] = useState(false);
@@ -56,8 +51,6 @@ export default function DashboardPage() {
   // Calculate analytics from real data — role-aware
   const dashboardEvents = isAdmin ? (events || []) : (events?.filter(e => e.organizer_id === profile?.user_id) || []);
   const totalEvents = dashboardEvents.length;
-  const totalRegistrations = dashboardEvents.reduce((sum, e) => sum + (e.registered_count || 0), 0);
-  const totalAttended = dashboardEvents.reduce((sum, e) => sum + (e.attended_count || 0), 0);
   const rolePendingEvents = dashboardEvents.filter(e => e.status === 'pending');
 
   const greeting = () => {
@@ -137,7 +130,7 @@ export default function DashboardPage() {
 
         {/* Stats Grid — admin and organizer */}
         {(isAdmin || isOrganizer) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <StatCard
               title="Total Events"
               value={totalEvents}
@@ -146,27 +139,11 @@ export default function DashboardPage() {
               delay={0}
             />
             <StatCard
-              title="Total Registrations"
-              value={totalRegistrations.toLocaleString()}
-              icon={Users}
-              variant="success"
-              delay={0.1}
-              badge={totalRegistrations > 0 ? totalRegistrations : undefined}
-            />
-            <StatCard
               title={isAdmin ? "Pending Approvals" : "My Pending Events"}
               value={rolePendingEvents.length}
               icon={Clock}
               variant="warning"
               delay={0.2}
-            />
-            <StatCard
-              title="Total Attendance"
-              value={totalAttended.toLocaleString()}
-              icon={CheckCircle}
-              variant="accent"
-              delay={0.3}
-              badge={totalAttended > 0 ? totalAttended : undefined}
             />
           </div>
         )}
@@ -222,64 +199,7 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Attendance Tracking & Recent Registrations — admin & organizer only */}
-        {(isAdmin || isOrganizer) && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div className="lg:col-span-2">
-              <AttendanceTrackingWidget events={events || []} />
-            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-card rounded-2xl border border-border p-6 h-full flex flex-col"
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <Users className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Recent Registrations</h2>
-              </div>
-
-              {registrationsLoading ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : recentRegistrations && recentRegistrations.length > 0 ? (
-                <div className="space-y-4 flex-1">
-                  {recentRegistrations.map((reg) => (
-                    <div key={reg.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                          {reg.user?.name?.charAt(0) || 'U'}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-none">{reg.user?.name || 'Anonymous'}</p>
-                          <p className="text-[11px] text-muted-foreground mt-1 truncate max-w-[120px]">
-                            {reg.event?.title}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        {new Date(reg.registered_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground py-8">
-                  <Ticket className="w-8 h-8 mb-2 opacity-20" />
-                  <p className="text-sm">No recent sign-ups</p>
-                </div>
-              )}
-
-              <Link to="/attendance" className="mt-6">
-                <Button variant="outline" size="sm" className="w-full text-xs">
-                  View All Registrants
-                </Button>
-              </Link>
-            </motion.div>
-          </div>
-        )}
 
         {/* Upcoming & Live Meetings Highlight */}
         {upcomingMeetings.length > 0 && (
