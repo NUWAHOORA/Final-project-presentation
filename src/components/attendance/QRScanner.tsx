@@ -8,6 +8,7 @@ interface QRScannerProps {
     qrbox?: number | { width: number; height: number };
     aspectRatio?: number;
     disableFlip?: boolean;
+    enabled?: boolean;
 }
 
 export const QRScanner = ({
@@ -17,10 +18,21 @@ export const QRScanner = ({
     qrbox = 250,
     aspectRatio = 1.0,
     disableFlip = false,
+    enabled = true,
 }: QRScannerProps) => {
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
     useEffect(() => {
+        if (!enabled) {
+            if (scannerRef.current) {
+                scannerRef.current.clear().catch((error) => {
+                    console.error("Failed to clear html5QrcodeScanner. ", error);
+                });
+                scannerRef.current = null;
+            }
+            return;
+        }
+
         // Initialize the scanner
         const scanner = new Html5QrcodeScanner(
             "qr-reader",
@@ -57,7 +69,7 @@ export const QRScanner = ({
                 });
             }
         };
-    }, [onScanSuccess, onScanFailure, fps, qrbox, aspectRatio, disableFlip]);
+    }, [onScanSuccess, onScanFailure, fps, qrbox, aspectRatio, disableFlip, enabled]);
 
     return (
         <div className="w-full max-w-lg mx-auto overflow-hidden rounded-xl border border-border bg-black">
