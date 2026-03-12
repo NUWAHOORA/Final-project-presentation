@@ -42,8 +42,9 @@ export const QRScanner = ({
                 aspectRatio,
                 disableFlip,
                 formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-                // Set to true to use the local camera if available
-                rememberLastUsedCamera: true,
+                // Let html5-qrcode handle camera selection dynamically
+                // (Setting videoConstraints directly often breaks Mobile Safari/Chrome)
+                supportedScanTypes: [0] // 0 = Camera only
             },
       /* verbose= */ false
         );

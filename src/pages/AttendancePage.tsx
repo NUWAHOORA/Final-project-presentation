@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEvents } from '@/hooks/useEvents';
 import { useEventRegistrations, useMarkAttendance } from '@/hooks/useRegistrations';
 import { QRScanner } from '@/components/attendance/QRScanner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AttendancePage() {
   const { toast } = useToast();
@@ -29,9 +30,17 @@ export default function AttendancePage() {
   const [manualCode, setManualCode] = useState('');
   const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean; message?: string }[]>([]);
 
+  const { user, role } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
-  const approvedEvents = events?.filter(e => e.status === 'approved') || [];
-  const event = approvedEvents.find(e => e.id === selectedEvent);
+
+  // Filter events: Admins see all approved/live events, organizers see their own events.
+  const scanableEvents = events?.filter(e => {
+    if (role === 'admin') return e.status === 'approved' || e.status === 'live';
+    if (e.organizer_id === user?.id) return true; // Organizers can see and scan for their own events
+    return e.status === 'approved' || e.status === 'live';
+  }) || [];
+
+  const event = scanableEvents.find(e => e.id === selectedEvent);
 
   const { data: registrations } = useEventRegistrations(selectedEvent);
   const markAttendance = useMarkAttendance();
@@ -163,7 +172,7 @@ export default function AttendancePage() {
                     <SelectValue placeholder="Choose an event to scan for" />
                   </SelectTrigger>
                   <SelectContent>
-                    {approvedEvents.map((evt) => (
+                    {scanableEvents.map((evt) => (
                       <SelectItem key={evt.id} value={evt.id}>
                         {evt.title}
                       </SelectItem>
