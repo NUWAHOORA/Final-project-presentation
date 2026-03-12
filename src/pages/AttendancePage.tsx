@@ -43,15 +43,20 @@ export default function AttendancePage() {
     let ticketEventId: string | null = null;
     let registrationId: string | null = null;
 
-    // Handle URL format: .../checkin?event=...&user=...&reg=...
-    try {
-      const url = new URL(code);
-      if (url.pathname.includes('checkin')) {
-        ticketEventId = url.searchParams.get('event');
-        registrationId = url.searchParams.get('reg');
+    // Handle different QR code formats
+    if (code.startsWith('http')) {
+      // Handle URL format: .../checkin?event=...&user=...&reg=...
+      try {
+        const url = new URL(code);
+        if (url.pathname.includes('checkin')) {
+          ticketEventId = url.searchParams.get('event');
+          registrationId = url.searchParams.get('reg');
+        }
+      } catch {
+        // Ignore invalid URLs
       }
-    } catch {
-      // Not a URL — try newer attendance:... format or legacy ticket:... format
+    } else {
+      // Not an HTTP URL — try newer attendance:... format or legacy ticket:... format
       const parts = code.split(':');
       if (parts.length >= 2 && parts[0] === 'attendance') {
         registrationId = parts[1];
