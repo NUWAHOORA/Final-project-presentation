@@ -40,6 +40,16 @@ export default function AttendancePage() {
     return e.status === 'approved' || e.status === 'live';
   }) || [];
 
+  console.log('--- SCANNER DEBUG ---');
+  console.log('User ID:', user?.id);
+  console.log('User Role:', role);
+  console.log('Total Events fetched:', events?.length);
+  console.log('Events matching scanable filter:', scanableEvents.length);
+  scanableEvents.forEach(e => {
+    console.log(`Event: ${e.title} | Status: ${e.status} | Organizer: ${e.organizer_id}`);
+  });
+  console.log('---------------------');
+
   const event = scanableEvents.find(e => e.id === selectedEvent);
 
   const { data: registrations } = useEventRegistrations(selectedEvent);
