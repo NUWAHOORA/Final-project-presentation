@@ -75,8 +75,8 @@ export function ReportDownloadDialog({
         try {
             // Small timeout so the UI can render the spinner before heavy work
             await new Promise((r) => setTimeout(r, 80));
-            if (format === 'csv') downloadCSV(events, filters);
-            else downloadPDF(events, filters);
+            if (format === 'csv') await downloadCSV(events, filters);
+            else await downloadPDF(events, filters);
             setStatus('success');
             setTimeout(() => setStatus('idle'), 2500);
         } catch (err: unknown) {

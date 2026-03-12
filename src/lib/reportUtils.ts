@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Event } from '@/hooks/useEvents';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ReportFilters {
     dateFrom: string;
@@ -20,19 +21,66 @@ export function filterEvents(events: Event[], filters: ReportFilters): Event[] {
     });
 }
 
+async function fetchEventAttendees(events: Event[]) {
+    const eventIds = events.map(e => e.id);
+    if (eventIds.length === 0) return {};
+
+    // 1. Fetch registrations for these events
+    const { data: registrations } = await supabase
+        .from('registrations')
+        .select('event_id, user_id, attended')
+        .in('event_id', eventIds);
+
+    const attendeesMap: Record<string, { registered: string[], attended: string[] }> = {};
+    events.forEach(e => {
+        attendeesMap[e.id] = { registered: [], attended: [] };
+    });
+
+    if (!registrations || registrations.length === 0) return attendeesMap;
+
+    // 2. Fetch profiles for these users
+    const userIds = [...new Set(registrations.map(r => r.user_id))];
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .in('user_id', userIds);
+
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
+
+    // 3. Map names to events
+    registrations.forEach(reg => {
+        const eventId = reg.event_id;
+        const name = profileMap.get(reg.user_id) || 'Unknown User';
+        if (attendeesMap[eventId]) {
+            attendeesMap[eventId].registered.push(name);
+            if (reg.attended) {
+                attendeesMap[eventId].attended.push(name);
+            }
+        }
+    });
+
+    return attendeesMap;
+}
+
 /** Build table rows for both CSV and PDF. */
-function buildRows(events: Event[]): string[][] {
-    return events.map((e) => [
-        e.title,
-        e.date,
-        e.time,
-        e.venue,
-        e.category,
-        e.organizer_name || 'Unknown',
-        String(e.registered_count),
-        String(e.attended_count),
-        e.status,
-    ]);
+function buildRows(events: Event[], attendeesMap: Record<string, { registered: string[], attended: string[] }>): string[][] {
+    return events.map((e) => {
+        const registeredNames = attendeesMap[e.id]?.registered.join(', ') || '';
+        const attendedNames = attendeesMap[e.id]?.attended.join(', ') || '';
+        return [
+            e.title,
+            e.date,
+            e.time,
+            e.venue,
+            e.category,
+            e.organizer_name || 'Unknown',
+            String(e.registered_count),
+            String(e.attended_count),
+            e.status,
+            registeredNames,
+            attendedNames
+        ];
+    });
 }
 
 const HEADERS = [
@@ -45,14 +93,17 @@ const HEADERS = [
     'Registrations',
     'Attended',
     'Status',
+    'Registered Names',
+    'Attended Names'
 ];
 
 /** Download filtered events as a CSV file. */
-export function downloadCSV(events: Event[], filters: ReportFilters): void {
+export async function downloadCSV(events: Event[], filters: ReportFilters): Promise<void> {
     const filtered = filterEvents(events, filters);
     if (filtered.length === 0) throw new Error('No events match the selected filters.');
 
-    const rows = buildRows(filtered);
+    const attendeesMap = await fetchEventAttendees(filtered);
+    const rows = buildRows(filtered, attendeesMap);
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
     const csvLines = [
@@ -70,10 +121,11 @@ export function downloadCSV(events: Event[], filters: ReportFilters): void {
 }
 
 /** Download filtered events as a PDF file. */
-export function downloadPDF(events: Event[], filters: ReportFilters): void {
+export async function downloadPDF(events: Event[], filters: ReportFilters): Promise<void> {
     const filtered = filterEvents(events, filters);
     if (filtered.length === 0) throw new Error('No events match the selected filters.');
 
+    const attendeesMap = await fetchEventAttendees(filtered);
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
     // Title
@@ -99,18 +151,20 @@ export function downloadPDF(events: Event[], filters: ReportFilters): void {
     autoTable(doc, {
         startY: 28,
         head: [HEADERS],
-        body: buildRows(filtered),
+        body: buildRows(filtered, attendeesMap),
         headStyles: {
             fillColor: [79, 70, 229], // indigo-600
             textColor: 255,
             fontStyle: 'bold',
-            fontSize: 8,
+            fontSize: 7,
         },
-        bodyStyles: { fontSize: 8 },
+        bodyStyles: { fontSize: 7 },
         alternateRowStyles: { fillColor: [245, 245, 255] },
         columnStyles: {
-            0: { cellWidth: 45 }, // Event Name
-            3: { cellWidth: 35 }, // Location
+            0: { cellWidth: 35 }, // Event Name
+            3: { cellWidth: 25 }, // Location
+            9: { cellWidth: 40 }, // Registered Names
+            10: { cellWidth: 40 }, // Attended Names
         },
         margin: { left: 14, right: 14 },
         didDrawPage: (data) => {
