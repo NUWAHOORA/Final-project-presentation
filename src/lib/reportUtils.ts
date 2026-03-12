@@ -65,8 +65,20 @@ async function fetchEventAttendees(events: Event[]) {
 /** Build table rows for both CSV and PDF. */
 function buildRows(events: Event[], attendeesMap: Record<string, { registered: string[], attended: string[] }>): string[][] {
     return events.map((e) => {
-        const registeredNames = attendeesMap[e.id]?.registered.join(', ') || '';
-        const attendedNames = attendeesMap[e.id]?.attended.join(', ') || '';
+        const registeredList = attendeesMap[e.id]?.registered || [];
+        const attendedList = attendeesMap[e.id]?.attended || [];
+
+        // Include names and total count in the fields
+        let registeredNames = registeredList.join(', ');
+        if (registeredList.length > 0) registeredNames += ` (Total: ${registeredList.length})`;
+
+        let attendedNames = attendedList.join(', ');
+        if (attendedList.length > 0) attendedNames += ` (Total: ${attendedList.length})`;
+
+        // Also fix the individual count columns using the actual fetched array lengths
+        const registeredCount = Math.max(e.registered_count || 0, registeredList.length);
+        const attendedCount = Math.max(e.attended_count || 0, attendedList.length);
+
         return [
             e.title,
             e.date,
@@ -74,8 +86,8 @@ function buildRows(events: Event[], attendeesMap: Record<string, { registered: s
             e.venue,
             e.category,
             e.organizer_name || 'Unknown',
-            String(e.registered_count),
-            String(e.attended_count),
+            String(registeredCount),
+            String(attendedCount),
             e.status,
             registeredNames,
             attendedNames
