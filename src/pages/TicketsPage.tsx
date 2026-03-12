@@ -11,8 +11,9 @@ export default function TicketsPage() {
   const { user } = useAuth();
   const { data: registrations, isLoading } = useMyRegistrations();
 
-  // Filter only approved events
-  const ticketRegistrations = registrations?.filter(r => r.event?.status === 'approved') || [];
+  // Show all strictly valid registrations (event exists)
+  // Even if the event is 'pending', the user should be able to see their registration QR
+  const ticketRegistrations = registrations?.filter(r => r.event) || [];
 
   return (
     <MainLayout>
