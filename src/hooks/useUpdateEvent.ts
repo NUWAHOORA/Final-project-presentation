@@ -33,7 +33,7 @@ export function useUpdateEvent() {
 
       const { error } = await supabase
         .from('events')
-        .update(updateData as any)
+        .update({ ...updateData, status: 'pending' } as any)
         .eq('id', id);
 
 

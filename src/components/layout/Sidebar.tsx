@@ -19,7 +19,8 @@ import {
   X,
   Smartphone,
   Monitor,
-  LayoutGrid
+  LayoutGrid,
+  XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewMode } from '@/contexts/ViewModeContext';
@@ -41,6 +42,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'All Events', path: '/events' },
     { icon: CheckCircle, label: 'Approvals', path: '/approvals' },
+    { icon: XCircle, label: 'Rejected Events', path: '/rejected-events' },
     { icon: Video, label: 'Meetings', path: '/meetings' },
     { icon: Package, label: 'Resources', path: '/resources' },
     { icon: Users, label: 'Users', path: '/users' },
@@ -61,6 +63,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
   user: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'Browse Events', path: '/events' },
+    { icon: Plus, label: 'Create Event', path: '/events/create' },
     { icon: Video, label: 'Meetings', path: '/meetings' },
     { icon: CheckCircle, label: 'My Registrations', path: '/registrations' },
     { icon: QrCode, label: 'My Tickets', path: '/tickets' },
@@ -70,6 +73,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'Browse Events', path: '/events' },
+    { icon: Plus, label: 'Create Event', path: '/events/create' },
     { icon: Video, label: 'Meetings', path: '/meetings' },
     { icon: CheckCircle, label: 'My Registrations', path: '/registrations' },
     { icon: QrCode, label: 'My Tickets', path: '/tickets' },
