@@ -1,26 +1,31 @@
 import { motion } from 'framer-motion';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
   Calendar,
   Download,
-  Filter
+  Filter,
+  Package,
+  Archive,
+  Clock,
+  Loader2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { mockAnalytics } from '@/lib/mockData';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
   Cell,
   LineChart,
   Line,
@@ -32,6 +37,30 @@ import {
 const COLORS = ['hsl(221, 83%, 53%)', 'hsl(38, 92%, 50%)', 'hsl(142, 76%, 36%)', 'hsl(0, 84%, 60%)', 'hsl(250, 84%, 54%)', 'hsl(199, 89%, 48%)'];
 
 export default function AnalyticsPage() {
+  const { data, isLoading, error } = useAnalyticsData();
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="p-8 flex items-center justify-center h-full min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="p-8">
+          <div className="bg-destructive/10 text-destructive p-4 rounded-lg">
+            Failed to load analytics data. Please try again later.
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="p-8">
@@ -68,38 +97,55 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Events"
-            value={mockAnalytics.totalEvents}
+            value={data.totalEvents}
             icon={Calendar}
-            trend={{ value: 12, positive: true }}
             variant="primary"
             delay={0}
           />
           <StatCard
-            title="Total Registrations"
-            value={mockAnalytics.totalRegistrations.toLocaleString()}
+            title="Active Users"
+            value={data.totalUsers.toLocaleString()}
             icon={Users}
-            trend={{ value: 8, positive: true }}
             variant="success"
             delay={0.1}
           />
           <StatCard
-            title="Total Attendance"
-            value={mockAnalytics.totalAttendance.toLocaleString()}
-            icon={TrendingUp}
-            trend={{ value: 5, positive: true }}
+            title="Registered Students"
+            value={data.totalRegistrants.toLocaleString()}
+            icon={Users}
             variant="accent"
             delay={0.2}
           />
           <StatCard
-            title="Attendance Rate"
-            value={`${mockAnalytics.attendanceRate}%`}
-            icon={BarChart3}
-            trend={{ value: 3, positive: true }}
+            title="Attendance Records"
+            value={data.totalAttendance.toLocaleString()}
+            icon={TrendingUp}
             variant="warning"
             delay={0.3}
+          />
+          <StatCard
+            title="Resources Available"
+            value={data.totalResources.toLocaleString()}
+            icon={Package}
+            variant="primary"
+            delay={0.4}
+          />
+          <StatCard
+            title="Resources Allocated"
+            value={data.allocatedResources.toLocaleString()}
+            icon={Archive}
+            variant="success"
+            delay={0.5}
+          />
+          <StatCard
+            title="Upcoming Events"
+            value={data.upcomingEvents.toLocaleString()}
+            icon={Clock}
+            variant="accent"
+            delay={0.6}
           />
         </div>
 
@@ -117,8 +163,8 @@ export default function AnalyticsPage() {
               <AreaChart data={mockAnalytics.monthlyTrends}>
                 <defs>
                   <linearGradient id="colorRegistrations" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -131,13 +177,13 @@ export default function AnalyticsPage() {
                     borderRadius: '8px',
                   }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="registrations" 
-                  stroke="hsl(221, 83%, 53%)" 
+                <Area
+                  type="monotone"
+                  dataKey="registrations"
+                  stroke="hsl(221, 83%, 53%)"
                   strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorRegistrations)" 
+                  fillOpacity={1}
+                  fill="url(#colorRegistrations)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -192,10 +238,10 @@ export default function AnalyticsPage() {
               <BarChart data={mockAnalytics.popularEvents} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  stroke="hsl(var(--muted-foreground))" 
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                   width={120}
                   tickFormatter={(value) => value.length > 15 ? value.substring(0, 15) + '...' : value}
@@ -234,20 +280,20 @@ export default function AnalyticsPage() {
                   }}
                 />
                 <Legend />
-                <Line 
+                <Line
                   yAxisId="left"
-                  type="monotone" 
-                  dataKey="events" 
-                  stroke="hsl(221, 83%, 53%)" 
+                  type="monotone"
+                  dataKey="events"
+                  stroke="hsl(221, 83%, 53%)"
                   strokeWidth={2}
                   dot={{ fill: 'hsl(221, 83%, 53%)', strokeWidth: 2, r: 4 }}
                   name="Events"
                 />
-                <Line 
+                <Line
                   yAxisId="right"
-                  type="monotone" 
-                  dataKey="registrations" 
-                  stroke="hsl(var(--accent))" 
+                  type="monotone"
+                  dataKey="registrations"
+                  stroke="hsl(var(--accent))"
                   strokeWidth={2}
                   dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2, r: 4 }}
                   name="Registrations"
