@@ -17,26 +17,25 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate tomorrow's date
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    // Calculate today's date
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
 
-    console.log(`Checking for events on ${tomorrowStr}`);
+    console.log(`Checking for events on ${todayStr}`);
 
-    // Get approved events happening tomorrow
+    // Get approved events happening today
     const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("*")
-      .eq("date", tomorrowStr)
+      .eq("date", todayStr)
       .eq("status", "approved");
 
     if (eventsError) throw eventsError;
 
     if (!events || events.length === 0) {
-      console.log("No events tomorrow");
+      console.log("No events today");
       return new Response(
-        JSON.stringify({ success: true, message: "No events tomorrow", reminders_sent: 0 }),
+        JSON.stringify({ success: true, message: "No events today", reminders_sent: 0 }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -72,8 +71,8 @@ serve(async (req: Request) => {
         await supabase.from("notifications").insert({
           user_id: profile.user_id,
           type: "event_reminder",
-          title: "📅 Event Tomorrow!",
-          message: `Reminder: "${event.title}" is happening tomorrow at ${event.time} in ${event.venue}. Don't miss it!`,
+          title: "📅 Event Today!",
+          message: `Reminder: "${event.title}" is happening today at ${event.time} in ${event.venue}. Don't miss it!`,
           event_id: event.id,
         });
 
@@ -84,7 +83,7 @@ serve(async (req: Request) => {
             recipient_email: profile.email,
             recipient_user_id: profile.user_id,
             recipient_name: profile.name,
-            subject: `⏰ Reminder: "${event.title}" is tomorrow!`,
+            subject: `⏰ Reminder: "${event.title}" is today!`,
             event_id: event.id,
             event_title: event.title,
             event_date: event.date,

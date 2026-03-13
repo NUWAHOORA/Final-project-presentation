@@ -241,6 +241,31 @@ export function useUpdateEventStatus() {
           message: `Your event "${eventData.title}" has been ${status}${status === 'approved' ? '. You have also been promoted to Organizer.' : '.'}`,
           event_id: id,
         }]);
+
+        if (status === 'approved') {
+          const { data: allUsers } = await supabase
+            .from('profiles')
+            .select('user_id');
+
+          if (allUsers && allUsers.length > 0) {
+            const notificationsToInsert = allUsers
+              .filter(u => u.user_id !== eventData.organizer_id)
+              .map(u => ({
+                user_id: u.user_id,
+                type: 'info',
+                title: 'New Event Approved!',
+                message: `A new event "${eventData.title}" has been approved and is now visible.`,
+                event_id: id,
+              }));
+
+            // Insert in chunks of 500 to avoid limits
+            const chunkSize = 500;
+            for (let i = 0; i < notificationsToInsert.length; i += chunkSize) {
+              const chunk = notificationsToInsert.slice(i, i + chunkSize);
+              await supabase.from('notifications').insert(chunk);
+            }
+          }
+        }
       }
     },
     onSuccess: (_, { status }) => {
