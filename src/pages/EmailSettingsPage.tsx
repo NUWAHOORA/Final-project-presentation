@@ -1,4 +1,9 @@
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -17,7 +22,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Send,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -89,6 +96,12 @@ export default function EmailSettingsPage() {
               <History className="h-4 w-4" />
               Email Logs
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="broadcast" className="gap-2">
+                <Send className="h-4 w-4" />
+                Broadcast
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {isAdmin && (
@@ -104,6 +117,12 @@ export default function EmailSettingsPage() {
           <TabsContent value="logs">
             <EmailLogsTab />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="broadcast">
+              <BroadcastEmailTab />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </MainLayout>
@@ -381,5 +400,143 @@ function EmailLogsTab() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function BroadcastEmailTab() {
+  const { toast } = useToast();
+  const [subject, setSubject] = useState('🔒 Important: Please Update Your Password');
+  const [message, setMessage] = useState(
+    'For security purposes, we kindly request that you update your password at your earliest convenience. ' +
+    'Please log in to the Smart University Event Management System and navigate to your profile settings to change your password. ' +
+    'If you did not request this or have any concerns, please contact the system administrator.'
+  );
+  const [isSending, setIsSending] = useState(false);
+  const [results, setResults] = useState<{ sent: number; failed: number; total: number } | null>(null);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !message.trim()) {
+      toast({ title: 'Missing fields', description: 'Please fill in both subject and message.', variant: 'destructive' });
+      return;
+    }
+
+    setIsSending(true);
+    setResults(null);
+
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('user_id, name, email');
+
+      if (error) throw error;
+      if (!profiles || profiles.length === 0) {
+        toast({ title: 'No users found', description: 'There are no registered users to email.', variant: 'destructive' });
+        setIsSending(false);
+        return;
+      }
+
+      let sent = 0;
+      let failed = 0;
+
+      for (const profile of profiles) {
+        if (!profile.email) { failed++; continue; }
+        const { error: invokeError } = await supabase.functions.invoke('send-email-notification', {
+          body: {
+            notification_type: 'general',
+            recipient_email: profile.email,
+            recipient_user_id: profile.user_id,
+            recipient_name: profile.name || 'User',
+            subject,
+            additional_message: message,
+          },
+        });
+        if (invokeError) { failed++; } else { sent++; }
+      }
+
+      setResults({ sent, failed, total: profiles.length });
+      toast({
+        title: sent > 0 ? 'Emails sent!' : 'Sending failed',
+        description: `Sent: ${sent}, Failed: ${failed} out of ${profiles.length} user(s).`,
+        variant: sent > 0 ? 'default' : 'destructive',
+      });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Users className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-800">Broadcast Email</p>
+              <p className="text-sm text-blue-700">
+                Send a custom email to <strong>all registered users</strong>. Use this for important system announcements.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5 text-primary" />
+            Compose Broadcast Email
+          </CardTitle>
+          <CardDescription>This email will be sent to every user in the system.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Subject</label>
+            <Input
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              placeholder="Email subject"
+              disabled={isSending}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Message</label>
+            <Textarea
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="Email body message"
+              rows={6}
+              disabled={isSending}
+            />
+          </div>
+
+          {results && (
+            <div className={`p-4 rounded-lg text-sm flex items-center gap-3 ${
+              results.failed === 0
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-amber-50 border border-amber-200 text-amber-800'
+            }`}>
+              {results.failed === 0
+                ? <CheckCircle className="h-4 w-4" />
+                : <AlertCircle className="h-4 w-4" />}
+              <span>
+                Last send: <strong>{results.sent}</strong> sent, <strong>{results.failed}</strong> failed
+                out of <strong>{results.total}</strong> user(s).
+              </span>
+            </div>
+          )}
+
+          <Button
+            onClick={handleSend}
+            disabled={isSending}
+            className="w-full gap-2"
+          >
+            <Send className="h-4 w-4" />
+            {isSending ? 'Sending to all users...' : 'Send to All Users'}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
