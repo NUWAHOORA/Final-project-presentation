@@ -17,25 +17,29 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate today's date
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
 
-    console.log(`Checking for events on ${todayStr}`);
+    // Calculate tomorrow's date for 24-hour-ahead reminders
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-    // Get approved events happening today
+    console.log(`Running reminders: today=${todayStr}, tomorrow=${tomorrowStr}`);
+
+    // Fetch approved events happening today OR tomorrow
     const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("*")
-      .eq("date", todayStr)
+      .in("date", [todayStr, tomorrowStr])
       .eq("status", "approved");
 
     if (eventsError) throw eventsError;
 
     if (!events || events.length === 0) {
-      console.log("No events today");
+      console.log("No upcoming events found for reminders");
       return new Response(
-        JSON.stringify({ success: true, message: "No events today", reminders_sent: 0 }),
+        JSON.stringify({ success: true, message: "No upcoming events", reminders_sent: 0 }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -43,6 +47,9 @@ serve(async (req: Request) => {
     let totalReminders = 0;
 
     for (const event of events) {
+      const isToday = event.date === todayStr;
+      const isTomorrow = event.date === tomorrowStr;
+
       // Get all registrations for this event
       const { data: registrations, error: regError } = await supabase
         .from("registrations")
@@ -66,48 +73,90 @@ serve(async (req: Request) => {
 
       if (!profiles) continue;
 
+      const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
       for (const profile of profiles) {
-        // Send in-app notification
-        await supabase.from("notifications").insert({
-          user_id: profile.user_id,
-          type: "event_reminder",
-          title: "📅 Event Today!",
-          message: `Reminder: "${event.title}" is happening today at ${event.time} in ${event.venue}. Don't miss it!`,
-          event_id: event.id,
-        });
-
-        // Send email reminder via the existing edge function
-        try {
-          const emailPayload = {
-            notification_type: "event_reminder",
-            recipient_email: profile.email,
-            recipient_user_id: profile.user_id,
-            recipient_name: profile.name,
-            subject: `⏰ Reminder: "${event.title}" is today!`,
+        if (isToday) {
+          // Same-day reminder: in-app + email
+          await supabase.from("notifications").insert({
+            user_id: profile.user_id,
+            type: "event_reminder",
+            title: "📅 Event Today!",
+            message: `Reminder: "${event.title}" is happening today at ${event.time} in ${event.venue}. Don't miss it!`,
             event_id: event.id,
-            event_title: event.title,
-            event_date: event.date,
-            event_time: event.time,
-            event_venue: event.venue,
-          };
-
-          await supabase.functions.invoke("send-email-notification", {
-            body: emailPayload,
           });
-        } catch (emailErr) {
-          console.error(`Failed to send reminder email to ${profile.email}:`, emailErr);
-        }
 
-        totalReminders++;
+          try {
+            await supabase.functions.invoke("send-email-notification", {
+              body: {
+                notification_type: "event_reminder",
+                recipient_email: profile.email,
+                recipient_user_id: profile.user_id,
+                recipient_name: profile.name,
+                subject: `⏰ Today's Event: "${event.title}" starts soon!`,
+                event_id: event.id,
+                event_title: event.title,
+                event_date: formattedDate,
+                event_time: event.time,
+                event_venue: event.venue,
+              },
+            });
+          } catch (emailErr) {
+            console.error(`Failed to send today reminder email to ${profile.email}:`, emailErr);
+          }
+
+          totalReminders++;
+        } else if (isTomorrow) {
+          // 24-hour ahead reminder: in-app + email
+          await supabase.from("notifications").insert({
+            user_id: profile.user_id,
+            type: "event_reminder",
+            title: "⏰ Event Tomorrow!",
+            message: `Don't forget: "${event.title}" is happening tomorrow at ${event.time} in ${event.venue}. Get ready!`,
+            event_id: event.id,
+          });
+
+          try {
+            await supabase.functions.invoke("send-email-notification", {
+              body: {
+                notification_type: "event_reminder",
+                recipient_email: profile.email,
+                recipient_user_id: profile.user_id,
+                recipient_name: profile.name,
+                subject: `📅 Reminder: "${event.title}" is tomorrow!`,
+                event_id: event.id,
+                event_title: event.title,
+                event_date: formattedDate,
+                event_time: event.time,
+                event_venue: event.venue,
+              },
+            });
+          } catch (emailErr) {
+            console.error(`Failed to send tomorrow reminder email to ${profile.email}:`, emailErr);
+          }
+
+          totalReminders++;
+        }
       }
     }
 
-    console.log(`Sent ${totalReminders} reminders for ${events.length} events`);
+    const todayEvents = events.filter((e) => e.date === todayStr).length;
+    const tomorrowEvents = events.filter((e) => e.date === tomorrowStr).length;
+
+    console.log(
+      `Sent ${totalReminders} reminders — ${todayEvents} event(s) today, ${tomorrowEvents} event(s) tomorrow`
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
-        events_found: events.length,
+        events_today: todayEvents,
+        events_tomorrow: tomorrowEvents,
         reminders_sent: totalReminders,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }

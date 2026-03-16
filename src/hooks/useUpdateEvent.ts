@@ -36,8 +36,52 @@ export function useUpdateEvent() {
         .update({ ...updateData, status: 'pending' } as any)
         .eq('id', id);
 
-
       if (error) throw error;
+
+      // Send email notifications to registered users about the update
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('title, date, time, venue')
+        .eq('id', id)
+        .single();
+
+      if (eventData) {
+        const { data: registrations } = await supabase
+          .from('registrations')
+          .select('user_id')
+          .eq('event_id', id);
+
+        if (registrations && registrations.length > 0) {
+          const userIds = registrations.map(r => r.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, name, email')
+            .in('user_id', userIds);
+
+          const formattedDate = new Date(eventData.date).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+          });
+
+          if (profiles) {
+            for (const profile of profiles) {
+              supabase.functions.invoke('send-email-notification', {
+                body: {
+                  notification_type: 'event_updated',
+                  recipient_email: profile.email,
+                  recipient_user_id: profile.user_id,
+                  recipient_name: profile.name,
+                  subject: `📝 Event Updated: ${eventData.title}`,
+                  event_id: id,
+                  event_title: eventData.title,
+                  event_date: formattedDate,
+                  event_time: eventData.time,
+                  event_venue: eventData.venue,
+                },
+              }).catch(err => console.error('Event update email error:', err));
+            }
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });

@@ -260,6 +260,42 @@ export function useCreateMeeting() {
         if (partError) {
           console.error('Error adding participants:', partError);
         }
+
+        // Send email invitations to participants
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, name, email')
+          .in('user_id', data.participant_ids);
+
+        const { data: eventData } = await supabase
+          .from('events')
+          .select('title')
+          .eq('id', data.event_id)
+          .single();
+
+        const formattedDate = new Date(data.meeting_date).toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        });
+
+        if (profiles) {
+          for (const profile of profiles) {
+            supabase.functions.invoke('send-email-notification', {
+              body: {
+                notification_type: 'meeting_scheduled',
+                recipient_email: profile.email,
+                recipient_user_id: profile.user_id,
+                recipient_name: profile.name,
+                subject: `📅 Meeting Invitation: ${data.title}`,
+                meeting_id: meeting.id,
+                meeting_title: data.title,
+                meeting_date: formattedDate,
+                meeting_time: data.meeting_time,
+                meeting_link: data.meeting_link,
+                event_title: eventData?.title || '',
+              },
+            }).catch(err => console.error('Meeting invite email error:', err));
+          }
+        }
       }
 
       return meeting;
@@ -303,6 +339,51 @@ export function useUpdateMeeting() {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Send email notifications to participants about the update
+      const { data: meetingData } = await supabase
+        .from('meetings')
+        .select('title, meeting_date, meeting_time, meeting_link, event_id')
+        .eq('id', id)
+        .single();
+
+      if (meetingData) {
+        const { data: participants } = await supabase
+          .from('meeting_participants')
+          .select('user_id')
+          .eq('meeting_id', id);
+
+        if (participants && participants.length > 0) {
+          const userIds = participants.map(p => p.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, name, email')
+            .in('user_id', userIds);
+
+          const formattedDate = new Date(meetingData.meeting_date).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+          });
+
+          if (profiles) {
+            for (const profile of profiles) {
+              supabase.functions.invoke('send-email-notification', {
+                body: {
+                  notification_type: 'meeting_updated',
+                  recipient_email: profile.email,
+                  recipient_user_id: profile.user_id,
+                  recipient_name: profile.name,
+                  subject: `📝 Meeting Updated: ${meetingData.title}`,
+                  meeting_id: id,
+                  meeting_title: meetingData.title,
+                  meeting_date: formattedDate,
+                  meeting_time: meetingData.meeting_time,
+                  meeting_link: meetingData.meeting_link,
+                },
+              }).catch(err => console.error('Meeting update email error:', err));
+            }
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
@@ -327,12 +408,57 @@ export function useDeleteMeeting() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Fetch meeting details and participants BEFORE deleting
+      const { data: meetingData } = await supabase
+        .from('meetings')
+        .select('title, meeting_date, meeting_time, event_id')
+        .eq('id', id)
+        .single();
+
+      const { data: participants } = await supabase
+        .from('meeting_participants')
+        .select('user_id')
+        .eq('meeting_id', id);
+
+      let profiles: { user_id: string; name: string; email: string }[] | null = null;
+      if (participants && participants.length > 0) {
+        const userIds = participants.map(p => p.user_id);
+        const { data } = await supabase
+          .from('profiles')
+          .select('user_id, name, email')
+          .in('user_id', userIds);
+        profiles = data;
+      }
+
       const { error } = await supabase
         .from('meetings')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Send cancellation emails after successful deletion
+      if (meetingData && profiles && profiles.length > 0) {
+        const formattedDate = new Date(meetingData.meeting_date).toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        });
+
+        for (const profile of profiles) {
+          supabase.functions.invoke('send-email-notification', {
+            body: {
+              notification_type: 'meeting_cancelled',
+              recipient_email: profile.email,
+              recipient_user_id: profile.user_id,
+              recipient_name: profile.name,
+              subject: `❌ Meeting Cancelled: ${meetingData.title}`,
+              meeting_id: id,
+              meeting_title: meetingData.title,
+              meeting_date: formattedDate,
+              meeting_time: meetingData.meeting_time,
+            },
+          }).catch(err => console.error('Meeting cancellation email error:', err));
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });

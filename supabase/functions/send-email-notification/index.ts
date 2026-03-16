@@ -214,38 +214,42 @@ function getEmailTemplate(data: EmailNotificationRequest): string {
     case "event_registration":
       content = `
         <div class="header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-          <h1>🎟️ Registration Confirmed</h1>
+          <h1>🎟️ Registration Confirmed!</h1>
         </div>
         <div class="content">
           <p>Hello ${data.recipient_name || "there"},</p>
-          <p>You have successfully registered for the following event:</p>
+          <p>You have successfully registered for the following event. We're excited to have you!</p>
           <div class="details">
-            <p><strong>Event:</strong> ${data.event_title}</p>
-            <p><strong>Date:</strong> ${data.event_date}</p>
-            <p><strong>Time:</strong> ${data.event_time}</p>
-            <p><strong>Venue:</strong> ${data.event_venue}</p>
+            <p><strong>📌 Event:</strong> ${data.event_title}</p>
+            <p><strong>📅 Date:</strong> ${data.event_date}</p>
+            <p><strong>🕐 Time:</strong> ${data.event_time}</p>
+            <p><strong>📍 Venue:</strong> ${data.event_venue}</p>
           </div>
-          <p>Your ticket and QR code are available in the app.</p>
-          <a href="${baseUrl}/tickets" class="button">View My Ticket</a>
+          <p>Your unique QR ticket has been generated. Show it at the entrance for seamless check-in.</p>
+          <p style="color: #6b7280; font-size: 14px;">💡 <em>Tip: You will receive another reminder email 24 hours before the event and on the day of the event.</em></p>
+          <a href="${baseUrl}/my-registrations" class="button" style="margin-right: 10px;">View My Ticket</a>
+          <a href="${baseUrl}/events/${data.event_id}" class="button" style="background: #4b5563;">Event Details</a>
         </div>
       `;
       break;
 
     case "event_reminder":
       content = `
-        <div class="header" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);">
-          <h1>⏰ Event Reminder</h1>
+        <div class="header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+          <h1>⏰ ${data.subject?.includes('tomorrow') ? "Event Reminder — Tomorrow!" : "Event Reminder — Today!"}</h1>
         </div>
         <div class="content">
           <p>Hello ${data.recipient_name || "there"},</p>
-          <p>This is a reminder for an upcoming event:</p>
+          <p>${data.subject?.includes('tomorrow') ? "Just a friendly heads-up that an event you've registered for is <strong>happening tomorrow</strong>. Make sure you're all set!" : "This is your <strong>day-of reminder</strong>! The event you registered for is happening <strong>today</strong>. We can't wait to see you there!"}</p>
           <div class="details">
-            <p><strong>Event:</strong> ${data.event_title}</p>
-            <p><strong>Date:</strong> ${data.event_date}</p>
-            <p><strong>Time:</strong> ${data.event_time}</p>
-            <p><strong>Venue:</strong> ${data.event_venue}</p>
+            <p><strong>📌 Event:</strong> ${data.event_title}</p>
+            <p><strong>📅 Date:</strong> ${data.event_date}</p>
+            <p><strong>🕐 Time:</strong> ${data.event_time}</p>
+            <p><strong>📍 Venue:</strong> ${data.event_venue}</p>
           </div>
-          <a href="${baseUrl}/events/${data.event_id}" class="button">View Event Details</a>
+          <p style="color: #6b7280; font-size: 14px;">🎟️ <em>Remember to bring your QR ticket for check-in at the entrance.</em></p>
+          <a href="${baseUrl}/my-registrations" class="button" style="margin-right: 10px;">View My Ticket</a>
+          <a href="${baseUrl}/events/${data.event_id}" class="button" style="background: #4b5563;">Event Details</a>
         </div>
       `;
       break;

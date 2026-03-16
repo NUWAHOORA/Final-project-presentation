@@ -166,6 +166,7 @@ export function getNotificationTypeLabel(type: string): string {
     event_cancelled: 'Event Cancelled',
     event_approved: 'Event Approved',
     event_rejected: 'Event Rejected',
+    event_registration: 'Event Registration Confirmation',
     meeting_scheduled: 'Meeting Scheduled',
     meeting_updated: 'Meeting Updated',
     meeting_cancelled: 'Meeting Cancelled',

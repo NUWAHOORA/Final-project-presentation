@@ -163,6 +163,42 @@ export function useCreateEvent() {
           }));
 
           await supabase.from('notifications').insert(adminNotifications);
+
+          // Send email notifications to admins about the new event
+          const { data: adminProfiles } = await supabase
+            .from('profiles')
+            .select('user_id, name, email')
+            .in('user_id', adminIdsToNotify);
+
+          const { data: organizerProfile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('user_id', user.id)
+            .single();
+
+          const formattedDate = new Date(eventData.date).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+          });
+
+          if (adminProfiles) {
+            for (const admin of adminProfiles) {
+              supabase.functions.invoke('send-email-notification', {
+                body: {
+                  notification_type: 'event_created',
+                  recipient_email: admin.email,
+                  recipient_user_id: admin.user_id,
+                  recipient_name: admin.name,
+                  subject: `🆕 New Event Pending Approval: ${eventData.title}`,
+                  event_id: data.id,
+                  event_title: eventData.title,
+                  event_date: formattedDate,
+                  event_time: eventData.time,
+                  event_venue: eventData.venue,
+                  organizer_name: organizerProfile?.name || 'Unknown',
+                },
+              }).catch(err => console.error('Admin event email error:', err));
+            }
+          }
         }
       }
 
@@ -241,6 +277,42 @@ export function useUpdateEventStatus() {
           message: `Your event "${eventData.title}" has been ${status}${status === 'approved' ? '. You have also been promoted to Organizer.' : '.'}`,
           event_id: id,
         }]);
+
+        // Send email notification to the organizer about approval/rejection
+        const { data: eventDetails } = await supabase
+          .from('events')
+          .select('date, time, venue')
+          .eq('id', id)
+          .single();
+
+        const { data: organizerProfile } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('user_id', eventData.organizer_id)
+          .single();
+
+        if (organizerProfile && eventDetails) {
+          const formattedDate = new Date(eventDetails.date).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+          });
+
+          supabase.functions.invoke('send-email-notification', {
+            body: {
+              notification_type: `event_${status}`,
+              recipient_email: organizerProfile.email,
+              recipient_user_id: eventData.organizer_id,
+              recipient_name: organizerProfile.name,
+              subject: status === 'approved'
+                ? `✅ Your Event Has Been Approved: ${eventData.title}`
+                : `❌ Your Event Was Not Approved: ${eventData.title}`,
+              event_id: id,
+              event_title: eventData.title,
+              event_date: formattedDate,
+              event_time: eventDetails.time,
+              event_venue: eventDetails.venue,
+            },
+          }).catch(err => console.error('Event status email error:', err));
+        }
 
         if (status === 'approved') {
           const { data: allUsers } = await supabase

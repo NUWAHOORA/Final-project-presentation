@@ -209,22 +209,31 @@ export function useRegisterForEvent() {
         supabase.from('profiles').select('name, email').eq('user_id', user.id).single(),
       ]);
 
-      // Send registration email notification
       if (eventData && profile) {
+        // Send in-app registration confirmation notification
+        await supabase.from('notifications').insert([{
+          user_id: user.id,
+          type: 'event_registration',
+          title: '🎟️ Registration Confirmed!',
+          message: `You have successfully registered for "${eventData.title}" on ${new Date(eventData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${eventData.time}, ${eventData.venue}. A confirmation email has been sent to you.`,
+          event_id: eventId,
+        }]);
+
+        // Send registration confirmation email
         supabase.functions.invoke('send-email-notification', {
           body: {
             notification_type: 'event_registration',
             recipient_email: profile.email,
             recipient_user_id: user.id,
             recipient_name: profile.name,
-            subject: `Registration Confirmed: ${eventData.title}`,
+            subject: `✅ Registration Confirmed: ${eventData.title}`,
             event_id: eventId,
             event_title: eventData.title,
-            event_date: eventData.date,
+            event_date: new Date(eventData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
             event_time: eventData.time,
             event_venue: eventData.venue,
           },
-        }).catch(err => console.error('Email notification error:', err));
+        }).catch(err => console.error('Registration email error:', err));
       }
 
       return data;
