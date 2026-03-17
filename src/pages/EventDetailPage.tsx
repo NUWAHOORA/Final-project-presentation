@@ -56,12 +56,12 @@ const categoryColors: Record<string, string> = {
 function EventResourceSummary({
   eventId,
   isPastEvent,
-  canEdit,
+  canReturn,
   onReturnClick,
 }: {
   eventId: string;
   isPastEvent: boolean;
-  canEdit: boolean;
+  canReturn: boolean;
   onReturnClick: () => void;
 }) {
   const { data: resources, isLoading } = useEventResources(eventId);
@@ -90,7 +90,7 @@ function EventResourceSummary({
           <h3 className="font-semibold text-lg">Allocated Resources</h3>
           <Badge variant="secondary" className="ml-2">{totalAllocated} total</Badge>
         </div>
-        {isPastEvent && canEdit && (
+        {isPastEvent && canReturn && (
           <Button
             variant="outline"
             size="sm"
@@ -443,7 +443,7 @@ export default function EventDetailPage() {
               <EventResourceSummary
                 eventId={event.id}
                 isPastEvent={isPastEvent}
-                canEdit={canEdit}
+                canReturn={role === 'admin'}
                 onReturnClick={() => setShowReturnDialog(true)}
               />
             )}
