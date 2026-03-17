@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Grid, List, Loader2 } from 'lucide-react';
+import { Search, Plus, Grid, List, Loader2, XCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
@@ -54,14 +54,24 @@ export default function EventsPage() {
             </motion.p>
           </div>
 
-          {(role === 'organizer' || role === 'admin') && (
-            <Link to="/events/create">
-              <Button className="gradient-primary text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Event
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {role === 'admin' && (
+              <Link to="/rejected-events">
+                <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Rejected Events
+                </Button>
+              </Link>
+            )}
+            {(role === 'organizer' || role === 'admin') && (
+              <Link to="/events/create">
+                <Button className="gradient-primary text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Filters */}

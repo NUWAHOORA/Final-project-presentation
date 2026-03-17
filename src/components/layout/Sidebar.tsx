@@ -42,7 +42,6 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'All Events', path: '/events' },
     { icon: CheckCircle, label: 'Approvals', path: '/approvals' },
-    { icon: XCircle, label: 'Rejected Events', path: '/rejected-events' },
     { icon: Video, label: 'Meetings', path: '/meetings' },
     { icon: Package, label: 'Resources', path: '/resources' },
     { icon: Users, label: 'Users', path: '/users' },

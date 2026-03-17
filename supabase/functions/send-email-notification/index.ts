@@ -381,11 +381,19 @@ const handler = async (req: Request): Promise<Response> => {
     // Send the email
     console.log(`Sending email to ${data.recipient_email}`);
     const emailResponse = await resend.emails.send({
-      from: "University Events <onboarding@resend.dev>", // Replace with your verified domain
+      from: "University Events <onboarding@resend.dev>",
       to: [data.recipient_email],
       subject: data.subject,
       html: htmlContent,
+      tags: [{ name: "notification_type", value: data.notification_type }],
     });
+
+    if ("error" in emailResponse && emailResponse.error) {
+      console.error("Resend error:", emailResponse.error);
+      throw new Error(
+        `Resend error: ${(emailResponse.error as any).message || JSON.stringify(emailResponse.error)}`
+      );
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
