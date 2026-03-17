@@ -20,7 +20,7 @@ interface AuthContextType {
   role: UserRole | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signUp: (email: string, password: string, name: string, role?: UserRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, department: string, role?: UserRole) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole = 'user') => {
+  const signUp = async (email: string, password: string, name: string, department: string, role: UserRole = 'user') => {
     // Use the deployed Vercel URL so that email verification works across all devices
     const redirectUrl = `https://final-project-presentation.vercel.app/`;
 
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { name, role }
+        data: { name, department, role }
       }
     });
 

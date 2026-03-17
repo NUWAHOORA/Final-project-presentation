@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, KeyRound } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, KeyRound, Building2 } from 'lucide-react';
 import ucuLogo from '@/assets/ucu-logo.png';
 import campusBg from '@/assets/campus-bg.jpg';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [department, setDepartment] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, resetPassword, isAuthenticated } = useAuth();
@@ -46,12 +47,17 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
+        if (!department.trim()) {
+          toast.error('Please enter your department');
+          setIsLoading(false);
+          return;
+        }
         if (password.length < 6) {
           toast.error('Password must be at least 6 characters');
           setIsLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, name, 'user');
+        const { error } = await signUp(email, password, name, department, 'user');
         if (error) {
           toast.error(error.message || 'Failed to sign up');
         } else {
@@ -180,6 +186,22 @@ export default function LoginPage() {
                       placeholder="Enter your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      className="pl-10 h-12"
+                      required={!isLogin}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="department"
+                      type="text"
+                      placeholder="e.g. Computer Science, Business, etc."
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
                       className="pl-10 h-12"
                       required={!isLogin}
                     />
