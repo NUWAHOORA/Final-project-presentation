@@ -25,6 +25,7 @@ import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeet
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
 import { parseISO, isToday, isFuture } from 'date-fns';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { EventsByMonthList } from '@/components/dashboard/EventsByMonthList';
 
 
 export default function DashboardPage() {
@@ -229,6 +230,10 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* All Events Grouped By Month - Admin Only */}
+        {role === 'admin' && dashboardEvents.length > 0 && (
+          <EventsByMonthList events={dashboardEvents} />
+        )}
 
 
         {/* Upcoming & Live Meetings Highlight */}
