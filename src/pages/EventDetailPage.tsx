@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvent, useUpdateEventMeetingStatus } from '@/hooks/useEvents';
+import { getDynamicEventStatus, getDynamicStatusDisplay, dynamicStatusColors } from '@/utils/eventStatus';
 
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -302,9 +303,16 @@ export default function EventDetailPage() {
                     <Badge className={cn("font-medium capitalize", categoryColors[event.category])}>
                       {event.category}
                     </Badge>
-                    <Badge variant="outline" className="capitalize font-medium">
-                      {event.status}
-                    </Badge>
+                    {(() => {
+                      const dynStatus = getDynamicEventStatus(event.status, event.date);
+                      const displayStatus = getDynamicStatusDisplay(dynStatus);
+                      const colorClass = dynamicStatusColors[dynStatus] || dynamicStatusColors.pending;
+                      return (
+                        <Badge variant="outline" className={cn("font-medium capitalize", colorClass)}>
+                          {displayStatus}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   {canEdit && (
                     <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>

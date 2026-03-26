@@ -5,6 +5,7 @@ import { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getDynamicEventStatus, getDynamicStatusDisplay, dynamicStatusColors } from '@/utils/eventStatus';
 
 interface EventCardProps {
   event: Event;
@@ -22,12 +23,6 @@ const categoryColors: Record<string, string> = {
 };
 
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-warning/10 text-warning border-warning/20',
-  approved: 'bg-success/10 text-success border-success/20',
-  rejected: 'bg-destructive/10 text-destructive border-destructive/20',
-  cancelled: 'bg-muted text-muted-foreground border-muted',
-};
 
 export function EventCard({ event, index = 0 }: EventCardProps) {
   const spotsLeft = event.capacity - event.registeredCount;
@@ -52,9 +47,16 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
               <Badge className={cn("font-medium capitalize", categoryColors[event.category])}>
                 {event.category}
               </Badge>
-              <Badge variant="outline" className={cn("font-medium capitalize", statusColors[event.status])}>
-                {event.status}
-              </Badge>
+              {(() => {
+                const dynStatus = getDynamicEventStatus(event.status, event.date);
+                const displayStatus = getDynamicStatusDisplay(dynStatus);
+                const colorClass = dynamicStatusColors[dynStatus] || dynamicStatusColors.pending;
+                return (
+                  <Badge variant="outline" className={cn("font-medium capitalize", colorClass)}>
+                    {displayStatus}
+                  </Badge>
+                );
+              })()}
             </div>
             <h3 className="text-xl font-semibold truncate group-hover:text-primary transition-colors">
               {event.title}

@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { getDynamicEventStatus, getDynamicStatusDisplay, dynamicStatusColors } from '@/utils/eventStatus';
 
 interface EventData {
   id: string;
@@ -103,13 +104,16 @@ export function EventsByMonthList({ events }: EventsByMonthListProps) {
                         </div>
                       </div>
                       <div>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          event.status === 'approved' ? 'bg-success/10 text-success' : 
-                          event.status === 'pending' ? 'bg-warning/10 text-warning' : 
-                          'bg-destructive/10 text-destructive'
-                        }`}>
-                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                        </span>
+                        {(() => {
+                          const dynStatus = getDynamicEventStatus(event.status, event.date || '');
+                          const displayStatus = getDynamicStatusDisplay(dynStatus);
+                          const colorClass = dynamicStatusColors[dynStatus] || dynamicStatusColors.pending;
+                          return (
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+                              {displayStatus}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
