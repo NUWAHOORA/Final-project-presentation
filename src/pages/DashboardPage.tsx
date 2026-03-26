@@ -23,7 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
-import { parseISO, isToday, isFuture } from 'date-fns';
+import { parseISO, isToday, isFuture, startOfDay } from 'date-fns';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { EventsByMonthList } from '@/components/dashboard/EventsByMonthList';
 
@@ -43,9 +43,22 @@ export default function DashboardPage() {
   const meetings = isAdmin || isOrganizer ? allMeetings : userMeetings;
   const meetingsLoading = isAdmin || isOrganizer ? loadingAll : loadingUser;
 
-  const approvedEvents = events?.filter(e => e.status === 'approved') || [];
+  const approvedEvents = events?.filter(e => e.status === 'approved' || e.status === 'live') || [];
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
-  const upcomingEvents = approvedEvents.slice(0, 3);
+  
+  const upcomingEvents = approvedEvents.filter(e => {
+    try {
+      const d = startOfDay(parseISO(e.date));
+      return d.getTime() >= startOfDay(new Date()).getTime();
+    } catch { return true; }
+  }).slice(0, 3);
+
+  const pastEvents = approvedEvents.filter(e => {
+    try {
+      const d = startOfDay(parseISO(e.date));
+      return d.getTime() < startOfDay(new Date()).getTime();
+    } catch { return false; }
+  }).slice(0, 3);
 
   const upcomingMeetings = meetings?.filter(m => {
     const date = parseISO(m.meeting_date);
@@ -320,6 +333,57 @@ export default function DashboardPage() {
             </div>
           )}
         </motion.div>
+
+        {/* Past Events */}
+        {pastEvents.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mt-8"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-muted-foreground">Past Events</h2>
+              <Link to="/events">
+                <Button variant="ghost" size="sm">
+                  View all <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            {eventsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
+                {pastEvents.map((event, index) => (
+                  <EventCard
+                    key={event.id}
+                    event={{
+                      id: event.id,
+                      title: event.title,
+                      description: event.description || '',
+                      date: event.date,
+                      time: event.time,
+                      venue: event.venue,
+                      category: event.category,
+                      capacity: event.capacity,
+                      registeredCount: event.registered_count,
+                      attendedCount: event.attended_count,
+                      status: event.status,
+                      organizerId: event.organizer_id,
+                      organizerName: event.organizer_name || 'Unknown',
+                      imageUrl: event.image_url || undefined,
+                      qrCode: event.qr_code || undefined,
+                      createdAt: event.created_at
+                    }}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Report Download Dialog — admin only, rendered at page level */}
