@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Event } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
+import { getDynamicEventStatus, getDynamicStatusDisplay } from '@/utils/eventStatus';
 
 export interface ReportFilters {
     dateFrom: string;
@@ -131,7 +132,7 @@ function buildRows(
             e.organizer_name || 'Unknown',
             String(registeredCount),
             String(attendedCount),
-            e.status,
+            getDynamicStatusDisplay(getDynamicEventStatus(e.status, e.date)),
             hiredData.summary.join(' | ') || '-',
             String(hiredData.totalQuantity),
             String(e.total_resource_cost || hiredData.totalCost),
