@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, CheckCircle, Package } from 'lucide-react';
-import { useResourceTypes, useBulkAllocateResources } from '@/hooks/useResources';
+import { useResourceTypes, useBulkAllocateResources, useEventResources } from '@/hooks/useResources';
 import { useResourceRequests } from '@/hooks/useResourceRequests';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUpdateEventStatus } from '@/hooks/useEvents';
@@ -33,12 +33,14 @@ export function ResourceHiringDialog({
 }: ResourceHiringDialogProps) {
   const { data: resourceTypes, isLoading: loadingTypes } = useResourceTypes();
   const { data: resourceRequests, isLoading: loadingRequests } = useResourceRequests(eventId);
+  const { data: eventResources, isLoading: loadingAllocations } = useEventResources(eventId);
   const bulkAllocateMutation = useBulkAllocateResources();
   const updateStatusMutation = useUpdateEventStatus();
   
   const [unitCosts, setUnitCosts] = useState<Record<string, number>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isLoading = loadingTypes || loadingRequests;
+  const isLoading = loadingTypes || loadingRequests || loadingAllocations;
 
   // Calculate missing resources
   const requestedItems = useMemo(() => {
@@ -48,19 +50,27 @@ export function ResourceHiringDialog({
       const type = resourceTypes.find(t => t.id === req.resource_type_id);
       const available = type ? type.available_quantity : 0;
       const requested = req.requested_quantity;
-      const missing = requested > available ? requested - available : 0;
-      const allocatingFromStock = requested > available ? available : requested;
+      
+      const existingAlloc = eventResources?.find(r => r.resource_type_id === req.resource_type_id);
+      const alreadyAllocated = existingAlloc?.quantity || 0;
+      
+      const remainingNeeded = Math.max(0, requested - alreadyAllocated);
+      
+      const allocatingFromStock = remainingNeeded > available ? available : remainingNeeded;
+      const missing = remainingNeeded - allocatingFromStock;
 
       return {
         resourceTypeId: req.resource_type_id,
         name: type?.name || 'Unknown',
         requested,
         available,
+        alreadyAllocated,
+        remainingNeeded,
         missing,
         allocatingFromStock
       };
-    });
-  }, [resourceRequests, resourceTypes]);
+    }).filter(item => item.remainingNeeded > 0); // Only show items that still need allocation
+  }, [resourceRequests, resourceTypes, eventResources]);
 
   const hasMissingResources = requestedItems.some(item => item.missing > 0);
 
@@ -82,6 +92,7 @@ export function ResourceHiringDialog({
 
   const handleApprove = async () => {
     try {
+      setIsSubmitting(true);
       // 1. Bulk Allocate
       const allocations = requestedItems.map(item => {
         const costPerUnit = unitCosts[item.resourceTypeId] || 0;
@@ -108,10 +119,12 @@ export function ResourceHiringDialog({
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Failed to approve event with resources:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const isPending = bulkAllocateMutation.isPending || updateStatusMutation.isPending;
+  const isPending = isSubmitting || bulkAllocateMutation.isPending || updateStatusMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,8 +155,8 @@ export function ResourceHiringDialog({
               
               {requestedItems.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground border border-dashed rounded-xl">
-                  <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">No resources were requested for this event.</p>
+                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-success opacity-80" />
+                  <p className="text-sm">All requested resources are already fully allocated!</p>
                 </div>
               ) : (
                 <div className="space-y-3">

@@ -168,6 +168,8 @@ export function useBulkAllocateResources() {
       if (!user) throw new Error('Not authenticated');
 
       for (const alloc of allocations) {
+        if (alloc.quantity === 0 && alloc.hiredQuantity === 0) continue;
+
         if (alloc.quantity > 0) {
           // Check available quantity for stock allocation
           const { data: resource, error: resourceError } = await supabase
@@ -192,42 +194,62 @@ export function useBulkAllocateResources() {
           if (updateError) throw updateError;
         }
 
-        // Allocate resource (both stock and hired)
-        const totalAllocated = alloc.quantity + alloc.hiredQuantity;
-        if (totalAllocated > 0) {
-          const { error: allocError } = await supabase
-            .from('event_resources')
-            .upsert({
-              event_id: eventId,
-              resource_type_id: alloc.resourceTypeId,
-              quantity: totalAllocated,
-              hired_quantity: alloc.hiredQuantity,
-              hire_cost: alloc.hireCost,
-              allocated_by: user.id,
-            }, {
-              onConflict: 'event_id,resource_type_id'
-            });
+        // Fetch existing allocation to add incrementally
+        const { data: existingAlloc } = await supabase
+          .from('event_resources')
+          .select('*')
+          .eq('event_id', eventId)
+          .eq('resource_type_id', alloc.resourceTypeId)
+          .maybeSingle();
 
-          if (allocError) throw allocError;
+        const oldQty = existingAlloc?.quantity || 0;
+        const oldHired = (existingAlloc as any)?.hired_quantity || 0;
+        const oldCost = (existingAlloc as any)?.hire_cost || 0;
 
-          // Audit log
-          await supabase.from('resource_audit_log').insert({
+        const newTotalQty = oldQty + alloc.quantity + alloc.hiredQuantity;
+        const newHired = oldHired + alloc.hiredQuantity;
+        const newCost = oldCost + alloc.hireCost;
+
+        const { error: allocError } = await supabase
+          .from('event_resources')
+          .upsert({
             event_id: eventId,
             resource_type_id: alloc.resourceTypeId,
-            action: 'allocated',
-            quantity: totalAllocated,
-            notes: alloc.hiredQuantity > 0 ? `Includes ${alloc.hiredQuantity} hired resources at UGX ${alloc.hireCost}` : null,
-            performed_by: user.id,
+            quantity: newTotalQty,
+            hired_quantity: newHired,
+            hire_cost: newCost,
+            allocated_by: user.id,
+          }, {
+            onConflict: 'event_id,resource_type_id'
           });
-        }
+
+        if (allocError) throw allocError;
+
+        // Audit log
+        await supabase.from('resource_audit_log').insert({
+          event_id: eventId,
+          resource_type_id: alloc.resourceTypeId,
+          action: 'allocated',
+          quantity: alloc.quantity + alloc.hiredQuantity,
+          notes: alloc.hiredQuantity > 0 ? `Includes ${alloc.hiredQuantity} hired resources at UGX ${alloc.hireCost}` : null,
+          performed_by: user.id,
+        });
       }
 
       // Update event total resource cost if any
       if (totalResourceCost > 0) {
-        // We use any to bypass type checking since the type might not have been regenerated yet
+        const { data: eventData } = await supabase
+          .from('events')
+          .select('total_resource_cost')
+          .eq('id', eventId)
+          .single();
+          
+        const oldTotalCost = (eventData as any)?.total_resource_cost || 0;
+        const newTotalCost = oldTotalCost + totalResourceCost;
+
         const { error: eventUpdateError } = await supabase
           .from('events')
-          .update({ total_resource_cost: totalResourceCost } as any)
+          .update({ total_resource_cost: newTotalCost } as any)
           .eq('id', eventId);
 
         if (eventUpdateError) throw eventUpdateError;
