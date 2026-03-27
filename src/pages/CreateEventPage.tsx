@@ -56,7 +56,7 @@ export default function CreateEventPage() {
     time: '',
     venue: '',
     category: '' as EventCategory,
-    capacity: '',
+    capacity: '1000',
   });
 
   const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
@@ -225,45 +225,27 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Category and Capacity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category" className="flex items-center gap-2">
-                  <Tags className="w-4 h-4 text-primary" />
-                  Category
-                </Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleChange('category', value)}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacity" className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  Capacity
-                </Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  placeholder="Max attendees"
-                  value={formData.capacity}
-                  onChange={(e) => handleChange('capacity', e.target.value)}
-                  className="h-12"
-                  min={1}
-                  required
-                />
-              </div>
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category" className="flex items-center gap-2">
+                <Tags className="w-4 h-4 text-primary" />
+                Category
+              </Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => handleChange('category', value)}
+              >
+                <SelectTrigger className="h-12 w-full">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
 
