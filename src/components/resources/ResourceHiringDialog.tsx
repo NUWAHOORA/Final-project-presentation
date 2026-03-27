@@ -140,7 +140,7 @@ export function ResourceHiringDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {hasMissingResources ? (
@@ -171,8 +171,8 @@ export function ResourceHiringDialog({
                   <p className="text-sm">All requested resources are already fully allocated!</p>
                 </div>
               ) : (
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table className="min-w-[700px]">
                     <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead>Resource</TableHead>
@@ -215,7 +215,7 @@ export function ResourceHiringDialog({
                                   placeholder="0"
                                   value={unitCosts[item.resourceTypeId] || ''}
                                   onChange={(e) => handleUnitCostChange(item.resourceTypeId, e.target.value)}
-                                  className="w-32 h-9"
+                                  className="w-28 h-9"
                                 />
                               ) : (
                                 <span className="text-muted-foreground text-sm">-</span>
