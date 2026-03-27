@@ -74,15 +74,19 @@ export function ResourceHiringDialog({
 
   const hasMissingResources = requestedItems.some(item => item.missing > 0);
 
-  const totalCost = useMemo(() => {
-    let total = 0;
+  const { totalMissing, totalAllocatingFromStock, totalCost } = useMemo(() => {
+    let cost = 0;
+    let missing = 0;
+    let stock = 0;
     requestedItems.forEach(item => {
+      stock += item.allocatingFromStock;
       if (item.missing > 0) {
+        missing += item.missing;
         const costPerUnit = unitCosts[item.resourceTypeId] || 0;
-        total += item.missing * costPerUnit;
+        cost += item.missing * costPerUnit;
       }
     });
-    return total;
+    return { totalMissing: missing, totalAllocatingFromStock: stock, totalCost: cost };
   }, [requestedItems, unitCosts]);
 
   const handleUnitCostChange = (resourceTypeId: string, costStr: string) => {
@@ -225,13 +229,23 @@ export function ResourceHiringDialog({
               )}
 
               {hasMissingResources && (
-                <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/20 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold text-primary">Total Hiring Cost</h3>
-                    <p className="text-sm text-muted-foreground">Will be recorded under event expenses</p>
+                <div className="mt-6 p-5 rounded-xl bg-primary/5 border border-primary/20 flex flex-col gap-4">
+                  <div className="flex justify-between items-center text-sm border-b pb-3 border-border">
+                    <span className="text-muted-foreground font-medium">Auto-Allocated from Stock:</span>
+                    <span className="font-semibold">{totalAllocatingFromStock} items</span>
                   </div>
-                  <div className="text-2xl font-bold text-primary">
-                    UGX {totalCost.toLocaleString()}
+                  <div className="flex justify-between items-center text-sm border-b pb-3 border-border">
+                    <span className="text-muted-foreground font-medium">Total Missing to Hire:</span>
+                    <span className="font-semibold text-warning">{totalMissing} items</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1">
+                    <div>
+                      <h3 className="font-bold text-primary text-base">Total Hiring Cost</h3>
+                      <p className="text-xs text-muted-foreground">Will be recorded under event expenses</p>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">
+                      UGX {totalCost.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               )}
