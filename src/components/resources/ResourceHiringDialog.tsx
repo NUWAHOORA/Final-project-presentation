@@ -10,11 +10,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertTriangle, CheckCircle, Package } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useResourceTypes, useBulkAllocateResources, useEventResources } from '@/hooks/useResources';
 import { useResourceRequests } from '@/hooks/useResourceRequests';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUpdateEventStatus } from '@/hooks/useEvents';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ResourceHiringDialogProps {
   open: boolean;
@@ -163,68 +171,64 @@ export function ResourceHiringDialog({
                   <p className="text-sm">All requested resources are already fully allocated!</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {requestedItems.map((item) => (
-                    <div 
-                      key={item.resourceTypeId} 
-                      className={`p-4 rounded-xl border ${item.missing > 0 ? 'bg-warning/5 border-warning/30' : 'bg-card border-border'}`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold flex items-center gap-2">
-                            {item.name}
-                            {item.missing > 0 ? (
-                              <Badge variant="outline" className="text-warning border-warning">Out of Stock</Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-success border-success">Available</Badge>
-                            )}
-                          </h4>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-4 text-sm mt-3 bg-background/50 p-2 rounded-lg">
-                        <div className="flex flex-col">
-                          <span className="text-muted-foreground text-xs">Required</span>
-                          <span className="font-medium">{item.requested}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-muted-foreground text-xs">Available</span>
-                          <span className="font-medium text-success">{item.available}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-muted-foreground text-xs">Missing</span>
-                          <span className={`font-medium ${item.missing > 0 ? 'text-destructive' : ''}`}>{item.missing}</span>
-                        </div>
-                      </div>
-
-                      {item.missing > 0 && (
-                        <div className="mt-4 pt-4 border-t border-warning/10">
-                          <label className="text-sm font-medium mb-1.5 block">
-                            Hire Missing Resources: Unit Cost (UGX)
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <div className="relative flex-1 max-w-[200px]">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">UGX</span>
-                              <Input 
-                                type="number" 
-                                min={0}
-                                className="pl-12"
-                                placeholder="0"
-                                value={unitCosts[item.resourceTypeId] || ''}
-                                onChange={(e) => handleUnitCostChange(item.resourceTypeId, e.target.value)}
-                              />
-                            </div>
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Subtotal: </span>
-                              <span className="font-semibold text-primary">
-                                UGX {(item.missing * (unitCosts[item.resourceTypeId] || 0)).toLocaleString()}
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead>Resource</TableHead>
+                        <TableHead className="text-center">Required</TableHead>
+                        <TableHead className="text-center">Available</TableHead>
+                        <TableHead className="text-center">Missing Quantity</TableHead>
+                        <TableHead>Unit Cost (UGX)</TableHead>
+                        <TableHead className="text-right">Total Amount (UGX)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requestedItems.map(item => {
+                        const cost = unitCosts[item.resourceTypeId] || 0;
+                        const subtotal = item.missing * cost;
+                        
+                        return (
+                          <TableRow key={item.resourceTypeId}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {item.name}
+                                {item.missing > 0 && (
+                                  <Badge variant="outline" className="text-xs text-warning border-warning">
+                                    Out of Stock
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">{item.requested}</TableCell>
+                            <TableCell className="text-center text-success font-medium">{item.available}</TableCell>
+                            <TableCell className="text-center">
+                              <span className={item.missing > 0 ? "text-destructive font-bold" : ""}>
+                                {item.missing}
                               </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                            </TableCell>
+                            <TableCell>
+                              {item.missing > 0 ? (
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  placeholder="0"
+                                  value={unitCosts[item.resourceTypeId] || ''}
+                                  onChange={(e) => handleUnitCostChange(item.resourceTypeId, e.target.value)}
+                                  className="w-32 h-9"
+                                />
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {item.missing > 0 ? subtotal.toLocaleString() : '-'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
