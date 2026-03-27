@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useEventResources } from '@/hooks/useResources';
-import { ResourceAllocationDialog } from '@/components/resources/ResourceAllocationDialog';
 import { ResourceHiringDialog } from '@/components/resources/ResourceHiringDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,7 +41,6 @@ export default function ApprovalsPage() {
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
   const { toast } = useToast();
 
-  const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
   const [hiringDialogOpen, setHiringDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; title: string } | null>(null);
 
@@ -54,11 +52,6 @@ export default function ApprovalsPage() {
 
   const handleReject = async (eventId: string) => {
     await updateStatusMutation.mutateAsync({ id: eventId, status: 'rejected' });
-  };
-
-  const openResourceDialog = (eventId: string, eventTitle: string) => {
-    setSelectedEvent({ id: eventId, title: eventTitle });
-    setResourceDialogOpen(true);
   };
 
   return (
@@ -149,13 +142,6 @@ export default function ApprovalsPage() {
                   <div className="flex gap-3 flex-shrink-0 flex-wrap">
                     <Button
                       variant="outline"
-                      onClick={() => openResourceDialog(event.id, event.title)}
-                    >
-                      <Package className="w-4 h-4 mr-2" />
-                      Allocate Resources
-                    </Button>
-                    <Button
-                      variant="outline"
                       className="border-destructive text-destructive hover:bg-destructive/10"
                       onClick={() => handleReject(event.id)}
                       disabled={updateStatusMutation.isPending}
@@ -195,21 +181,13 @@ export default function ApprovalsPage() {
 
       {/* Resource Allocation Dialog */}
       {selectedEvent && (
-        <>
-          <ResourceAllocationDialog
-            open={resourceDialogOpen}
-            onOpenChange={setResourceDialogOpen}
-            eventId={selectedEvent.id}
-            eventTitle={selectedEvent.title}
-          />
-          <ResourceHiringDialog
-            open={hiringDialogOpen}
-            onOpenChange={setHiringDialogOpen}
-            eventId={selectedEvent.id}
-            eventTitle={selectedEvent.title}
-            onSuccess={() => setHiringDialogOpen(false)}
-          />
-        </>
+        <ResourceHiringDialog
+          open={hiringDialogOpen}
+          onOpenChange={setHiringDialogOpen}
+          eventId={selectedEvent.id}
+          eventTitle={selectedEvent.title}
+          onSuccess={() => setHiringDialogOpen(false)}
+        />
       )}
     </MainLayout>
   );
