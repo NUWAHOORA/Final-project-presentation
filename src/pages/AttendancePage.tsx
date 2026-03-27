@@ -29,6 +29,7 @@ export default function AttendancePage() {
   const [selectedEvent, setSelectedEvent] = useState('');
   const [manualCode, setManualCode] = useState('');
   const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean; message?: string }[]>([]);
+  const [scanResult, setScanResult] = useState<{ name: string; success: boolean; message: string } | null>(null);
 
   const { user, role } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
@@ -118,12 +119,19 @@ export default function AttendancePage() {
       {
         onSuccess: () => {
           addScan(userName, true, 'Checked in successfully');
+          showScanResult(userName, true, 'Successfully Checked In!');
         },
         onError: () => {
           addScan(userName, false, 'Check-in failed');
+          showScanResult(userName, false, 'Check-in Failed');
         }
       }
     );
+  };
+
+  const showScanResult = (name: string, success: boolean, message: string) => {
+    setScanResult({ name, success, message });
+    setTimeout(() => setScanResult(null), 2800);
   };
 
   const addScan = (name: string, success: boolean, message?: string) => {
@@ -141,6 +149,46 @@ export default function AttendancePage() {
 
   return (
     <MainLayout>
+      {/* ── Scan Result Overlay ── */}
+      {scanResult && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center ${
+            scanResult.success ? 'bg-success/95' : 'bg-destructive/95'
+          } backdrop-blur-sm`}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: [0, 1.2, 1] }}
+            transition={{ duration: 0.5, times: [0, 0.6, 1] }}
+          >
+            {scanResult.success ? (
+              <CheckCircle className="w-32 h-32 text-white drop-shadow-xl" />
+            ) : (
+              <XCircle className="w-32 h-32 text-white drop-shadow-xl" />
+            )}
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-4xl font-bold text-white mt-6 text-center"
+          >
+            {scanResult.message}
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="text-white/80 text-2xl mt-3 font-medium"
+          >
+            {scanResult.name}
+          </motion.p>
+        </motion.div>
+      )}
+
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
