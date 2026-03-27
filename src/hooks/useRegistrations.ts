@@ -190,8 +190,12 @@ export function useRegisterForEvent() {
 
       if (eventCheckError) throw eventCheckError;
 
-      const eventDateTime = new Date(`${eventCheck.date}T${eventCheck.time}`);
-      if (eventDateTime < new Date()) {
+      const eventDateOnly = new Date(eventCheck.date);
+      eventDateOnly.setHours(0, 0, 0, 0);
+      const todayOnly = new Date();
+      todayOnly.setHours(0, 0, 0, 0);
+
+      if (eventDateOnly < todayOnly) {
         throw new Error('Cannot register for a past event.');
       }
 
