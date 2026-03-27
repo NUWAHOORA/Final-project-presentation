@@ -171,7 +171,7 @@ export function useBulkAllocateResources() {
         if (alloc.quantity === 0 && alloc.hiredQuantity === 0) continue;
 
         if (alloc.quantity > 0) {
-          // Check available quantity for stock allocation
+          // Check available quantity for stock allocation FIRST
           const { data: resource, error: resourceError } = await supabase
             .from('resource_types')
             .select('available_quantity, name')
@@ -182,16 +182,6 @@ export function useBulkAllocateResources() {
           if (resource.available_quantity < alloc.quantity) {
             throw new Error(`Only ${resource.available_quantity} ${resource.name} available (requested ${alloc.quantity})`);
           }
-
-          // Update available quantity
-          const { error: updateError } = await supabase
-            .from('resource_types')
-            .update({
-              available_quantity: resource.available_quantity - alloc.quantity
-            })
-            .eq('id', alloc.resourceTypeId);
-
-          if (updateError) throw updateError;
         }
 
         // Fetch existing allocation to add incrementally
@@ -210,6 +200,7 @@ export function useBulkAllocateResources() {
         const newHired = oldHired + alloc.hiredQuantity;
         const newCost = oldCost + alloc.hireCost;
 
+        // Do the upsert into event_resources SECOND (to prevent losing stock if this crashes)
         const { error: allocError } = await supabase
           .from('event_resources')
           .upsert({
@@ -224,6 +215,26 @@ export function useBulkAllocateResources() {
           });
 
         if (allocError) throw allocError;
+
+        // ONLY deduct stock AFTER the allocation succeeds
+        if (alloc.quantity > 0) {
+          const { data: resourceToUpdate } = await supabase
+            .from('resource_types')
+            .select('available_quantity')
+            .eq('id', alloc.resourceTypeId)
+            .single();
+            
+          if (resourceToUpdate) {
+            const { error: updateError } = await supabase
+              .from('resource_types')
+              .update({
+                available_quantity: resourceToUpdate.available_quantity - alloc.quantity
+              })
+              .eq('id', alloc.resourceTypeId);
+
+            if (updateError) throw updateError;
+          }
+        }
 
         // Audit log
         await supabase.from('resource_audit_log').insert({
