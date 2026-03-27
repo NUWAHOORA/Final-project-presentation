@@ -26,6 +26,8 @@ export interface Event {
   organizer_name?: string;
   organizer_role?: 'admin' | 'organizer' | 'user' | 'student';
   total_resource_cost?: number;
+  end_date?: string | null;
+  end_time?: string | null;
 }
 
 export function useEvents() {
@@ -104,6 +106,8 @@ export function useCreateEvent() {
       description: string;
       date: string;
       time: string;
+      end_date?: string;
+      end_time?: string;
       venue: string;
       category: 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
       capacity: number;
@@ -123,6 +127,8 @@ export function useCreateEvent() {
           description: eventData.description,
           date: eventData.date,
           time: eventData.time,
+          end_date: eventData.end_date || null,
+          end_time: eventData.end_time || null,
           venue: eventData.venue,
           category: eventData.category,
           capacity: eventData.capacity,

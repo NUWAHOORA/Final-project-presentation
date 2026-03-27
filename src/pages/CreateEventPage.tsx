@@ -6,12 +6,12 @@ import {
   Calendar,
   Clock,
   MapPin,
-  Users,
   FileText,
   Tags,
   Check,
   Loader2,
-  Info
+  Info,
+  CalendarRange,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -54,10 +54,23 @@ export default function CreateEventPage() {
     description: '',
     date: '',
     time: '',
+    end_date: '',
+    end_time: '',
     venue: '',
     category: '' as EventCategory,
     capacity: '1000',
   });
+
+  // Auto-calculate event duration
+  const durationDays = (() => {
+    if (!formData.date || !formData.end_date) return null;
+    const start = new Date(formData.date);
+    const end = new Date(formData.end_date);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return diff >= 0 ? diff + 1 : null; // inclusive days
+  })();
 
   const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
 
@@ -69,6 +82,8 @@ export default function CreateEventPage() {
       description: formData.description,
       date: formData.date,
       time: formData.time,
+      end_date: formData.end_date || formData.date,
+      end_time: formData.end_time || formData.time,
       venue: formData.venue,
       category: formData.category as EventCategory,
       capacity: parseInt(formData.capacity),
@@ -177,12 +192,12 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Date and Time */}
+            {/* Date/Time Row — Start */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date" className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-primary" />
-                  Date
+                  Start Date
                 </Label>
                 <Input
                   id="date"
@@ -196,7 +211,7 @@ export default function CreateEventPage() {
               <div className="space-y-2">
                 <Label htmlFor="time" className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary" />
-                  Time
+                  Start Time
                 </Label>
                 <Input
                   id="time"
@@ -208,6 +223,48 @@ export default function CreateEventPage() {
                 />
               </div>
             </div>
+
+            {/* Date/Time Row — End */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="end_date" className="flex items-center gap-2">
+                  <CalendarRange className="w-4 h-4 text-primary" />
+                  End Date
+                </Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  min={formData.date}
+                  onChange={(e) => handleChange('end_date', e.target.value)}
+                  className="h-12"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_time" className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  End Time
+                </Label>
+                <Input
+                  id="end_time"
+                  type="time"
+                  value={formData.end_time}
+                  onChange={(e) => handleChange('end_time', e.target.value)}
+                  className="h-12"
+                />
+              </div>
+            </div>
+
+            {/* Duration Badge */}
+            {durationDays !== null && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                <CalendarRange className="w-5 h-5 text-primary" />
+                <span className="text-sm text-muted-foreground">Event Duration:</span>
+                <span className="font-bold text-primary text-base">
+                  {durationDays === 1 ? '1 Day' : `${durationDays} Days`}
+                </span>
+              </div>
+            )}
 
             {/* Venue */}
             <div className="space-y-2">

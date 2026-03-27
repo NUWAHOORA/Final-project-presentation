@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Package,
   RotateCcw,
+  CalendarRange,
 } from 'lucide-react';
 
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -406,27 +407,64 @@ export default function EventDetailPage() {
                       <Calendar className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Date</p>
+                      <p className="text-sm text-muted-foreground">Start Date & Time</p>
                       <p className="font-medium">
                         {new Date(event.date).toLocaleDateString('en-US', {
-                          weekday: 'long',
+                          weekday: 'short',
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
                         })}
                       </p>
+                      <p className="text-sm text-muted-foreground">{event.time}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-                    <div className="p-3 rounded-lg bg-primary/10">
-                      <Clock className="w-5 h-5 text-primary" />
+                  {event.end_date ? (
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
+                      <div className="p-3 rounded-lg bg-primary/10">
+                        <CalendarRange className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">End Date & Time</p>
+                        <p className="font-medium">
+                          {new Date(event.end_date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        {event.end_time && <p className="text-sm text-muted-foreground">{event.end_time}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Time</p>
-                      <p className="font-medium">{event.time}</p>
+                  ) : (
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
+                      <div className="p-3 rounded-lg bg-primary/10">
+                        <Clock className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Start Time</p>
+                        <p className="font-medium">{event.time}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Duration badge */}
+                  {(() => {
+                    if (!event.end_date) return null;
+                    const s = new Date(event.date); s.setHours(0,0,0,0);
+                    const e2 = new Date(event.end_date); e2.setHours(0,0,0,0);
+                    const days = Math.round((e2.getTime() - s.getTime()) / 86400000) + 1;
+                    if (days <= 0) return null;
+                    return (
+                      <div className="md:col-span-2 flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                        <CalendarRange className="w-5 h-5 text-primary" />
+                        <span className="text-sm text-muted-foreground">Event Duration:</span>
+                        <span className="font-bold text-primary">{days === 1 ? '1 Day' : `${days} Days`}</span>
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 md:col-span-2">
                     <div className="p-3 rounded-lg bg-primary/10">
