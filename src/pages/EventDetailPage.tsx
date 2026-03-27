@@ -258,8 +258,12 @@ export default function EventDetailPage() {
   const isOwner = user?.id === event.organizer_id;
   const canEdit = isOwner || role === 'admin';
 
-  // Combine date + time to get a precise past-event cutoff
-  const isPastEvent = new Date(`${event.date}T${event.time}`) < new Date();
+  // An event is only "past" if it was on a previous calendar day
+  const eventDateOnly = new Date(event.date);
+  eventDateOnly.setHours(0, 0, 0, 0);
+  const todayOnly = new Date();
+  todayOnly.setHours(0, 0, 0, 0);
+  const isPastEvent = eventDateOnly < todayOnly;
 
   const handleRegister = () => {
     if (event) {
@@ -503,7 +507,7 @@ export default function EventDetailPage() {
                 <p className="text-sm text-warning mb-4">Only {spotsLeft} spots left!</p>
               )}
 
-              {(role === 'user' || role === 'student') && event.status === 'approved' && (
+              {(role === 'user' || role === 'student') && (event.status === 'approved' || event.status === 'live') && (
                 <>
                   {isPastEvent ? (
                     // Event is in the past — show info only
