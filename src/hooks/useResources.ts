@@ -20,6 +20,8 @@ export interface EventResource {
   allocated_by: string;
   allocated_at: string;
   notes: string | null;
+  hired_quantity?: number;
+  hire_cost?: number;
   resource_type?: ResourceType;
 }
 
@@ -136,6 +138,110 @@ export function useAllocateResource() {
     onError: (error: Error) => {
       toast({
         title: 'Error allocating resource',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useBulkAllocateResources() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      eventId,
+      allocations,
+      totalResourceCost,
+    }: {
+      eventId: string;
+      allocations: {
+        resourceTypeId: string;
+        quantity: number; // from stock
+        hiredQuantity: number;
+        hireCost: number; // total hire cost for this resource
+      }[];
+      totalResourceCost: number;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      for (const alloc of allocations) {
+        if (alloc.quantity > 0) {
+          // Check available quantity for stock allocation
+          const { data: resource, error: resourceError } = await supabase
+            .from('resource_types')
+            .select('available_quantity, name')
+            .eq('id', alloc.resourceTypeId)
+            .single();
+
+          if (resourceError) throw resourceError;
+          if (resource.available_quantity < alloc.quantity) {
+            throw new Error(`Only ${resource.available_quantity} ${resource.name} available (requested ${alloc.quantity})`);
+          }
+
+          // Update available quantity
+          const { error: updateError } = await supabase
+            .from('resource_types')
+            .update({
+              available_quantity: resource.available_quantity - alloc.quantity
+            })
+            .eq('id', alloc.resourceTypeId);
+
+          if (updateError) throw updateError;
+        }
+
+        // Allocate resource (both stock and hired)
+        const totalAllocated = alloc.quantity + alloc.hiredQuantity;
+        if (totalAllocated > 0) {
+          const { error: allocError } = await supabase
+            .from('event_resources')
+            .upsert({
+              event_id: eventId,
+              resource_type_id: alloc.resourceTypeId,
+              quantity: totalAllocated,
+              hired_quantity: alloc.hiredQuantity,
+              hire_cost: alloc.hireCost,
+              allocated_by: user.id,
+            }, {
+              onConflict: 'event_id,resource_type_id'
+            });
+
+          if (allocError) throw allocError;
+
+          // Audit log
+          await supabase.from('resource_audit_log').insert({
+            event_id: eventId,
+            resource_type_id: alloc.resourceTypeId,
+            action: 'allocated',
+            quantity: totalAllocated,
+            notes: alloc.hiredQuantity > 0 ? `Includes ${alloc.hiredQuantity} hired resources at UGX ${alloc.hireCost}` : null,
+            performed_by: user.id,
+          });
+        }
+      }
+
+      // Update event total resource cost if any
+      if (totalResourceCost > 0) {
+        // We use any to bypass type checking since the type might not have been regenerated yet
+        const { error: eventUpdateError } = await supabase
+          .from('events')
+          .update({ total_resource_cost: totalResourceCost } as any)
+          .eq('id', eventId);
+
+        if (eventUpdateError) throw eventUpdateError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event-resources'] });
+      queryClient.invalidateQueries({ queryKey: ['resource-types'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['resource-audit-log'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error allocating resources',
         description: error.message,
         variant: 'destructive',
       });

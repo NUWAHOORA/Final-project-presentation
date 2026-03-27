@@ -227,17 +227,27 @@ export function useUpdateEventStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
-      // If approving, check that resources have been allocated
+      // If approving, check that resources have been allocated or at least handle no requests gracefully.
       if (status === 'approved') {
-        const { data: allocations, error: allocError } = await supabase
-          .from('event_resources')
+        const { data: requests, error: requestsError } = await supabase
+          .from('event_resource_requests')
           .select('id')
           .eq('event_id', id);
 
-        if (allocError) throw allocError;
+        if (requestsError) throw requestsError;
 
-        if (!allocations || allocations.length === 0) {
-          throw new Error('Resources must be allocated before approving the event. Please allocate resources first.');
+        // If there are requested resources, ensure some allocations exist
+        if (requests && requests.length > 0) {
+          const { data: allocations, error: allocError } = await supabase
+            .from('event_resources')
+            .select('id')
+            .eq('event_id', id);
+
+          if (allocError) throw allocError;
+
+          if (!allocations || allocations.length === 0) {
+            throw new Error('Resources must be allocated before approving the event. Please allocate resources first.');
+          }
         }
       }
 

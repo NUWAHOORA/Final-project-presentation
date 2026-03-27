@@ -30,6 +30,7 @@ export interface Event {
   organizerName: string;
   imageUrl?: string;
   qrCode?: string;
+  total_resource_cost?: number;
   createdAt: string;
 }
 

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useEventResources } from '@/hooks/useResources';
 import { ResourceAllocationDialog } from '@/components/resources/ResourceAllocationDialog';
+import { ResourceHiringDialog } from '@/components/resources/ResourceHiringDialog';
 import { useToast } from '@/hooks/use-toast';
 
 function EventResourceStatus({ eventId }: { eventId: string }) {
@@ -42,15 +43,14 @@ export default function ApprovalsPage() {
   const { toast } = useToast();
 
   const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
+  const [hiringDialogOpen, setHiringDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; title: string } | null>(null);
 
-  const handleApprove = async (eventId: string) => {
-    try {
-      await updateStatusMutation.mutateAsync({ id: eventId, status: 'approved' });
-    } catch (error) {
-      // Error toast is already handled by the mutation's onError
-    }
+  const handleApprove = (eventId: string, eventTitle: string) => {
+    setSelectedEvent({ id: eventId, title: eventTitle });
+    setHiringDialogOpen(true);
   };
+
 
   const handleReject = async (eventId: string) => {
     await updateStatusMutation.mutateAsync({ id: eventId, status: 'rejected' });
@@ -165,7 +165,7 @@ export default function ApprovalsPage() {
                     </Button>
                     <Button
                       className="gradient-success text-white"
-                      onClick={() => handleApprove(event.id)}
+                      onClick={() => handleApprove(event.id, event.title)}
                       disabled={updateStatusMutation.isPending}
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
@@ -195,12 +195,21 @@ export default function ApprovalsPage() {
 
       {/* Resource Allocation Dialog */}
       {selectedEvent && (
-        <ResourceAllocationDialog
-          open={resourceDialogOpen}
-          onOpenChange={setResourceDialogOpen}
-          eventId={selectedEvent.id}
-          eventTitle={selectedEvent.title}
-        />
+        <>
+          <ResourceAllocationDialog
+            open={resourceDialogOpen}
+            onOpenChange={setResourceDialogOpen}
+            eventId={selectedEvent.id}
+            eventTitle={selectedEvent.title}
+          />
+          <ResourceHiringDialog
+            open={hiringDialogOpen}
+            onOpenChange={setHiringDialogOpen}
+            eventId={selectedEvent.id}
+            eventTitle={selectedEvent.title}
+            onSuccess={() => setHiringDialogOpen(false)}
+          />
+        </>
       )}
     </MainLayout>
   );
