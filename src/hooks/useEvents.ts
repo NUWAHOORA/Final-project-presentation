@@ -25,6 +25,7 @@ export interface Event {
   updated_at: string;
   organizer_name?: string;
   organizer_role?: 'admin' | 'organizer' | 'user' | 'student';
+  total_resource_cost?: number;
 }
 
 export function useEvents() {

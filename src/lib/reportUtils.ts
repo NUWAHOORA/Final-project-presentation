@@ -62,11 +62,54 @@ async function fetchEventAttendees(events: Event[]) {
     return attendeesMap;
 }
 
+async function fetchHiredResources(events: Event[]) {
+    const eventIds = events.map(e => e.id);
+    if (eventIds.length === 0) return {};
+
+    const { data: resources } = await supabase
+        .from('event_resources')
+        .select(`
+           event_id, 
+           hired_quantity, 
+           hire_cost,
+           resource_types(name)
+        `)
+        .in('event_id', eventIds)
+        .gt('hired_quantity', 0);
+
+    const hiredMap: Record<string, { summary: string[], totalQuantity: number, totalCost: number }> = {};
+    events.forEach(e => {
+        hiredMap[e.id] = { summary: [], totalQuantity: 0, totalCost: 0 };
+    });
+
+    if (!resources) return hiredMap;
+
+    (resources as any[]).forEach(res => {
+        const eventId = res.event_id;
+        const name = res.resource_types?.name || 'Unknown';
+        const qty = res.hired_quantity || 0;
+        const cost = typeof res.hire_cost === 'number' ? res.hire_cost : parseFloat(res.hire_cost as any) || 0;
+        
+        if (qty > 0) {
+            hiredMap[eventId].summary.push(`${name} (Qty: ${qty}, Cost: ${cost})`);
+            hiredMap[eventId].totalQuantity += qty;
+            hiredMap[eventId].totalCost += cost;
+        }
+    });
+
+    return hiredMap;
+}
+
 /** Build table rows for both CSV and PDF. */
-function buildRows(events: Event[], attendeesMap: Record<string, { registered: string[], attended: string[] }>): string[][] {
+function buildRows(
+    events: Event[], 
+    attendeesMap: Record<string, { registered: string[], attended: string[] }>,
+    hiredMap: Record<string, { summary: string[], totalQuantity: number, totalCost: number }>
+): string[][] {
     return events.map((e) => {
         const registeredList = attendeesMap[e.id]?.registered || [];
         const attendedList = attendeesMap[e.id]?.attended || [];
+        const hiredData = hiredMap[e.id] || { summary: [], totalQuantity: 0, totalCost: 0 };
 
         // Include names and total count in the fields
         let registeredNames = registeredList.join(', ');
@@ -89,6 +132,9 @@ function buildRows(events: Event[], attendeesMap: Record<string, { registered: s
             String(registeredCount),
             String(attendedCount),
             e.status,
+            hiredData.summary.join(' | ') || '-',
+            String(hiredData.totalQuantity),
+            String(e.total_resource_cost || hiredData.totalCost),
             registeredNames,
             attendedNames
         ];
@@ -102,9 +148,12 @@ const HEADERS = [
     'Location',
     'Category',
     'Organizer',
-    'Registrations',
+    'Regs',
     'Attended',
     'Status',
+    'Hired Items',
+    'Hired Qty',
+    'Hiring Cost',
     'Registered Names',
     'Attended Names'
 ];
@@ -115,7 +164,8 @@ export async function downloadCSV(events: Event[], filters: ReportFilters): Prom
     if (filtered.length === 0) throw new Error('No events match the selected filters.');
 
     const attendeesMap = await fetchEventAttendees(filtered);
-    const rows = buildRows(filtered, attendeesMap);
+    const hiredMap = await fetchHiredResources(filtered);
+    const rows = buildRows(filtered, attendeesMap, hiredMap);
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
     const csvLines = [
@@ -138,6 +188,7 @@ export async function downloadPDF(events: Event[], filters: ReportFilters): Prom
     if (filtered.length === 0) throw new Error('No events match the selected filters.');
 
     const attendeesMap = await fetchEventAttendees(filtered);
+    const hiredMap = await fetchHiredResources(filtered);
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
     // Title
@@ -163,7 +214,7 @@ export async function downloadPDF(events: Event[], filters: ReportFilters): Prom
     autoTable(doc, {
         startY: 28,
         head: [HEADERS],
-        body: buildRows(filtered, attendeesMap),
+        body: buildRows(filtered, attendeesMap, hiredMap),
         headStyles: {
             fillColor: [79, 70, 229], // indigo-600
             textColor: 255,
@@ -173,12 +224,13 @@ export async function downloadPDF(events: Event[], filters: ReportFilters): Prom
         bodyStyles: { fontSize: 7 },
         alternateRowStyles: { fillColor: [245, 245, 255] },
         columnStyles: {
-            0: { cellWidth: 35 }, // Event Name
-            3: { cellWidth: 25 }, // Location
-            9: { cellWidth: 40 }, // Registered Names
-            10: { cellWidth: 40 }, // Attended Names
+            0: { cellWidth: 25 }, // Event Name
+            3: { cellWidth: 20 }, // Location
+            9: { cellWidth: 35 }, // Hired Items
+            12: { cellWidth: 35 }, // Registered Names
+            13: { cellWidth: 35 }, // Attended Names
         },
-        margin: { left: 14, right: 14 },
+        margin: { left: 10, right: 10 },
         didDrawPage: (data) => {
             // Footer with page number
             const pageSize = doc.internal.pageSize;

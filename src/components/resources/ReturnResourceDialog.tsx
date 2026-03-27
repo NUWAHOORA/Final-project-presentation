@@ -45,7 +45,9 @@ interface ReturnItem {
     eventResourceId: string;
     resourceTypeId: string;
     resourceName: string;
-    allocatedQty: number;
+    allocatedQty: number; // total allocated (stock + hired)
+    hiredQty: number; // hired quantity
+    stockQty: number; // stock quantity
     quantityReturned: number;
     condition: Condition;
     notes: string;
@@ -78,15 +80,22 @@ export function ReturnResourceDialog({
 
         const items: ReturnItem[] = eventResources
             .filter(a => !returnedIds.has(a.id)) // exclude already returned
-            .map(a => ({
-                eventResourceId: a.id,
-                resourceTypeId: a.resource_type_id,
-                resourceName: a.resource_type?.name || 'Unknown',
-                allocatedQty: a.quantity,
-                quantityReturned: a.quantity,
-                condition: 'good' as Condition,
-                notes: '',
-            }));
+            .map(a => {
+                const stock = a.quantity - (a.hired_quantity || 0);
+                return {
+                    eventResourceId: a.id,
+                    resourceTypeId: a.resource_type_id,
+                    resourceName: a.resource_type?.name || 'Unknown',
+                    allocatedQty: a.quantity,
+                    hiredQty: a.hired_quantity || 0,
+                    stockQty: stock,
+                    quantityReturned: stock, // Default to returning all stock
+                    condition: 'good' as Condition,
+                    notes: '',
+                };
+            })
+            // Only show items that actually have stock to return (or optionally show hired ones as informational only)
+            .filter(item => item.stockQty > 0 || item.hiredQty > 0);
 
         setReturnItems(items);
         setInitialized(true);
@@ -189,20 +198,28 @@ export function ReturnResourceDialog({
                                                         <Package className="w-5 h-5 text-primary" />
                                                         <span className="font-semibold">{item.resourceName}</span>
                                                     </div>
-                                                    <Badge variant="secondary">{item.allocatedQty} allocated</Badge>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        {item.stockQty > 0 && <Badge variant="secondary">{item.stockQty} from stock</Badge>}
+                                                        {item.hiredQty > 0 && (
+                                                            <Badge variant="outline" className="text-warning border-warning bg-warning/5">
+                                                                {item.hiredQty} external
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 {/* Fields */}
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                     <div className="space-y-1.5">
-                                                        <Label className="text-xs text-muted-foreground">Qty Returned</Label>
+                                                        <Label className="text-xs text-muted-foreground">Stock Qty Returned</Label>
                                                         <Input
                                                             type="number"
                                                             min={0}
-                                                            max={item.allocatedQty}
+                                                            max={item.stockQty}
                                                             value={item.quantityReturned}
+                                                            disabled={item.stockQty === 0}
                                                             onChange={(e) => {
-                                                                const val = Math.min(parseInt(e.target.value) || 0, item.allocatedQty);
+                                                                const val = Math.min(parseInt(e.target.value) || 0, item.stockQty);
                                                                 updateItem(index, 'quantityReturned', val);
                                                             }}
                                                         />
