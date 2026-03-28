@@ -20,13 +20,24 @@ import {
   Package,
   RotateCcw,
   CalendarRange,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEvent, useUpdateEventMeetingStatus } from '@/hooks/useEvents';
+import { useEvent, useUpdateEventMeetingStatus, useDeleteEvent } from '@/hooks/useEvents';
 import { getDynamicEventStatus, getDynamicStatusDisplay, dynamicStatusColors } from '@/utils/eventStatus';
 
 import { useToast } from '@/hooks/use-toast';
@@ -227,9 +238,11 @@ export default function EventDetailPage() {
   const registerMutation = useRegisterForEvent();
   const cancelMutation = useCancelRegistration();
   const updateMeetingStatus = useUpdateEventMeetingStatus();
+  const deleteEvent = useDeleteEvent();
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (isLoading) {
     return (
@@ -319,12 +332,25 @@ export default function EventDetailPage() {
                       );
                     })()}
                   </div>
-                  {canEdit && (
-                    <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Event
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {canEdit && (
+                      <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Event
+                      </Button>
+                    )}
+                    {role === 'admin' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-destructive text-destructive hover:bg-destructive/10"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Event
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
@@ -705,7 +731,39 @@ export default function EventDetailPage() {
             eventTitle={event.title}
           />
         )}
-      </div >
+
+        {/* Delete Event Confirmation Dialog */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Event</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to permanently delete <strong>{event.title}</strong>? This
+                action cannot be undone. All registrations and associated data will be removed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteEvent.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteEvent.isPending}
+                onClick={() => {
+                  deleteEvent.mutate(event.id, {
+                    onSuccess: () => navigate('/events'),
+                  });
+                }}
+              >
+                {deleteEvent.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                {deleteEvent.isPending ? 'Deleting...' : 'Yes, Delete Event'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </MainLayout >
   );
 }
