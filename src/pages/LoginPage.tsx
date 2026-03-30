@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import LoginSuccessOverlay from '@/components/LoginSuccessOverlay';
 import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, KeyRound, Building2 } from 'lucide-react';
 import ucuLogo from '@/assets/ucu-logo.png';
 import campusBg from '@/assets/campus-bg.jpg';
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [department, setDepartment] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { signIn, signUp, resetPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -39,7 +41,8 @@ export default function LoginPage() {
           toast.error(error.message || 'Failed to sign in');
         } else {
           toast.success('Welcome back!');
-          navigate('/dashboard');
+          setShowSuccess(true);
+          setTimeout(() => navigate('/dashboard'), 1800);
         }
       } else {
         if (!name.trim()) {
@@ -95,6 +98,8 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+    <AnimatePresence>{showSuccess && <LoginSuccessOverlay />}</AnimatePresence>
     <div className="min-h-screen relative flex items-center justify-center p-4">
       {/* Full-page background */}
       <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
@@ -291,5 +296,6 @@ export default function LoginPage() {
         )}
       </motion.div>
     </div>
+    </>
   );
 }
