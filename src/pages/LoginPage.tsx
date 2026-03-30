@@ -108,7 +108,7 @@ export default function LoginPage() {
         className="relative z-10 w-full max-w-md bg-background/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl"
       >
         <div className="flex flex-col items-center mb-6">
-          <img src={ucuLogo} alt="UCU Logo" className="w-24 h-24 object-contain mb-4" />
+          <img src={ucuLogo} alt="UCU Logo" className="w-36 h-36 object-contain mb-4" />
           <h2 className="text-2xl font-bold text-center">
             {isForgotPassword
               ? 'Reset Password'
