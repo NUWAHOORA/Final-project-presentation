@@ -235,6 +235,8 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          end_date: string | null
+          end_time: string | null
           id: string
           image_url: string | null
           organizer_id: string
@@ -256,6 +258,8 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          end_date?: string | null
+          end_time?: string | null
           id?: string
           image_url?: string | null
           organizer_id: string
@@ -277,6 +281,8 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          end_date?: string | null
+          end_time?: string | null
           id?: string
           image_url?: string | null
           organizer_id?: string
