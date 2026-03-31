@@ -632,9 +632,21 @@ export default function EventDetailPage() {
                 </>
               )}
 
+              {(role === 'admin' || role === 'organizer') && (event.status === 'approved' || event.status === 'live') && (
+                <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/10 text-center">
+                  <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                    <User className="w-4 h-4 text-primary" />
+                    <span className="font-medium text-foreground">Students can register here.</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    (Button hidden for {role}s)
+                  </p>
+                </div>
+              )}
+
               {event.status === 'pending' && (
-                <p className="text-sm text-warning text-center">
-                  This event is pending approval
+                <p className="text-sm text-warning text-center mt-4">
+                  This event is pending approval. Students cannot register yet.
                 </p>
               )}
             </div>
