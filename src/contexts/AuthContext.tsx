@@ -120,15 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /** Dispatches the send-otp Edge Function for the current user */
   const dispatchOtp = async (currentUser: User): Promise<{ error: string | null }> => {
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || (supabase as any).supabaseUrl;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || (supabase as any).supabaseKey;
 
       const resp = await fetch(`${supabaseUrl}/functions/v1/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession?.access_token}`,
+          'Authorization': `Bearer ${currentSession?.access_token ?? anonKey}`,
           'apikey': anonKey,
         },
         body: JSON.stringify({
@@ -145,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (err: any) {
+      console.error('dispatchOtp error:', err);
       return { error: err.message || 'Failed to send OTP' };
     }
   };
@@ -160,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Fire-and-forget OTP dispatch (errors shown on verify page)
     if (data.user) {
-      dispatchOtp(data.user);
+      dispatchOtp(data.user).catch(err => console.error('OTP dispatch failed silently:', err));
     }
 
     return { error: null };
