@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, Clock, Trash2, RefreshCw, Search, Filter } from '
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,9 +11,9 @@ import { useMyInvitations, useUpdateInvitationStatus, useDeleteInvitation } from
 import { format } from 'date-fns';
 
 const statusConfig = {
-  pending:  { label: 'Pending',  icon: Clock,       color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  pending: { label: 'Pending', icon: Clock, color: 'bg-amber-100 text-amber-700 border-amber-200' },
   accepted: { label: 'Accepted', icon: CheckCircle, color: 'bg-green-100 text-green-700 border-green-200' },
-  declined: { label: 'Declined', icon: XCircle,     color: 'bg-red-100 text-red-700 border-red-200' },
+  declined: { label: 'Declined', icon: XCircle, color: 'bg-red-100 text-red-700 border-red-200' },
 };
 
 export function InvitationTrackerTab() {
@@ -35,7 +35,7 @@ export function InvitationTrackerTab() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {[1,2,3,4].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
       </div>
     );
   }
@@ -69,7 +69,7 @@ export function InvitationTrackerTab() {
 
       {/* Summary badges */}
       <div className="flex gap-2 flex-wrap text-sm">
-        {(['pending','accepted','declined'] as const).map(s => {
+        {(['pending', 'accepted', 'declined'] as const).map(s => {
           const count = (invitations || []).filter(i => i.status === s).length;
           const cfg = statusConfig[s];
           return (
@@ -102,10 +102,9 @@ export function InvitationTrackerTab() {
                   const Icon = cfg.icon;
                   return (
                     <div key={inv.id} className="flex items-start gap-4 p-4 hover:bg-accent/40 transition-colors">
-                      <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                        inv.status === 'accepted' ? 'text-green-600' :
-                        inv.status === 'declined' ? 'text-red-600' : 'text-amber-500'
-                      }`} />
+                      <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${inv.status === 'accepted' ? 'text-green-600' :
+                          inv.status === 'declined' ? 'text-red-600' : 'text-amber-500'
+                        }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium truncate">{inv.recipient_name || inv.recipient_email}</p>

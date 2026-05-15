@@ -32,6 +32,7 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, otpPending, navigate]);
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,8 +70,9 @@ export default function LoginPage() {
           navigate('/dashboard');
         }
       }
-    } catch {
-      toast.error('An unexpected error occurred');
+    } catch (err: any) {
+      console.error('Unexpected login error:', err);
+      toast.error(err?.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
