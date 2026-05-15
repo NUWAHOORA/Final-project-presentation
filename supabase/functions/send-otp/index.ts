@@ -78,16 +78,19 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
+    let emailSent = false;
     if (!emailResp.ok) {
       const errText = await emailResp.text();
       console.error("Email send failed:", errText);
-      // Still return success — OTP is in DB, user can try again
+      // Still return success — OTP is in DB, return code as fallback
+    } else {
+      emailSent = true;
     }
 
-    console.log(`OTP sent to ${email} for user ${user_id}`);
+    console.log(`OTP ${emailSent ? "emailed" : "saved (no email)"} for ${email}`);
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, otp_code: otpCode, email_sent: emailSent }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {

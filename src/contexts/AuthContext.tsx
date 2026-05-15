@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /** Dispatches the send-otp Edge Function for the current user */
-  const dispatchOtp = async (currentUser: User): Promise<{ error: string | null }> => {
+  const dispatchOtp = async (currentUser: User): Promise<{ error: string | null; fallbackCode?: string; emailSent?: boolean }> => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -144,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: body.error || 'Failed to send OTP' };
       }
 
-      return { error: null };
+      const body = await resp.json().catch(() => ({}));
+      return { error: null, fallbackCode: body.otp_code, emailSent: body.email_sent };
     } catch (err: any) {
       console.error('dispatchOtp error:', err);
       return { error: err.message || 'Failed to send OTP' };
@@ -160,9 +161,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(OTP_PENDING_KEY, 'true');
     setOtpPending(true);
 
-    // Fire-and-forget OTP dispatch (errors shown on verify page)
+    // Await OTP dispatch so we can surface the fallback code when email isn't configured
     if (data.user) {
-      dispatchOtp(data.user).catch(err => console.error('OTP dispatch failed silently:', err));
+      const otpResult = await dispatchOtp(data.user).catch(() => ({ error: null }));
+      if (otpResult.fallbackCode && !otpResult.emailSent) {
+        // Store fallback code so OtpVerificationPage can display it
+        sessionStorage.setItem('otp_fallback_code', otpResult.fallbackCode);
+      } else {
+        sessionStorage.removeItem('otp_fallback_code');
+      }
     }
 
     return { error: null };

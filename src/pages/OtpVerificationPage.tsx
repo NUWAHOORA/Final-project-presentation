@@ -21,6 +21,9 @@ export default function OtpVerificationPage() {
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const inputRefs = useRef<Array<HTMLInputElement | null>>(Array(OTP_LENGTH).fill(null));
 
+  // Fallback: code returned directly from Edge Function when email isn't configured
+  const [fallbackCode] = useState<string | null>(() => sessionStorage.getItem('otp_fallback_code'));
+
   // Timers
   const [expirySeconds, setExpirySeconds] = useState(OTP_EXPIRY_SECONDS);
   const [resendSeconds, setResendSeconds] = useState(RESEND_COOLDOWN_SECONDS);
@@ -290,6 +293,25 @@ export default function OtpVerificationPage() {
                 </div>
               </div>
             </div>
+
+            {/* Fallback code banner — shown when email isn't configured */}
+            {fallbackCode && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-center"
+              >
+                <p className="text-xs font-medium text-amber-600 mb-1">
+                  📧 Email not configured — your code is shown below:
+                </p>
+                <p className="text-3xl font-black tracking-[0.3em] text-amber-500 font-mono">
+                  {fallbackCode}
+                </p>
+                <p className="text-[10px] text-amber-500/70 mt-1">
+                  Enter this code in the boxes below
+                </p>
+              </motion.div>
+            )}
 
             {/* OTP digit inputs */}
             <div className="flex justify-center gap-2 mb-3">
