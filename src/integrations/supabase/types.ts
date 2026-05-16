@@ -435,6 +435,44 @@ export type Database = {
           },
         ]
       }
+      otp_verifications: {
+        Row: {
+          id: string
+          user_id: string
+          otp_code: string
+          expires_at: string
+          attempt_count: number
+          verified: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          otp_code: string
+          expires_at: string
+          attempt_count?: number
+          verified?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          otp_code?: string
+          expires_at?: string
+          attempt_count?: number
+          verified?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -445,6 +483,7 @@ export type Database = {
           name: string
           updated_at: string
           user_id: string
+          is_approved: boolean | null
         }
         Insert: {
           avatar_url?: string | null
@@ -455,6 +494,7 @@ export type Database = {
           name: string
           updated_at?: string
           user_id: string
+          is_approved?: boolean | null
         }
         Update: {
           avatar_url?: string | null
@@ -465,6 +505,7 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+          is_approved?: boolean | null
         }
         Relationships: []
       }

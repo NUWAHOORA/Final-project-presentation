@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUsers, useDeleteUser, useAddUser, useUpdateRole, UserWithRole } from '@/hooks/useUsers';
+import { useUsers, useDeleteUser, useAddUser, useUpdateRole, useApproveUser, UserWithRole } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { UsersTable } from '@/components/users/UsersTable';
 import { UserStatsCards } from '@/components/users/UserStatsCards';
@@ -30,6 +30,7 @@ export default function UsersPage() {
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { mutate: addUser, isPending: isAdding } = useAddUser();
   const { mutate: updateRole, isPending: isUpdatingRole } = useUpdateRole();
+  const { mutate: approveUser } = useApproveUser();
   const { user, role } = useAuth();
 
   const isAdmin = role === 'admin';
@@ -69,6 +70,10 @@ export default function UsersPage() {
     addUser(data, {
       onSuccess: () => setShowAddDialog(false)
     });
+  };
+
+  const handleApproveUser = (userToApprove: UserWithRole) => {
+    approveUser(userToApprove.user_id);
   };
 
   if (isLoading) {
@@ -143,6 +148,7 @@ export default function UsersPage() {
             isAdmin={isAdmin}
             onDeleteUser={handleDeleteUser}
             onEditRole={handleEditRole}
+            onApproveUser={handleApproveUser}
           />
         </motion.div>
 

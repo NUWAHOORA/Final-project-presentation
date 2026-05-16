@@ -27,6 +27,7 @@ import MeetingsPage from "@/pages/MeetingsPage";
 import EmailSettingsPage from "@/pages/EmailSettingsPage";
 import InvitationsPage from "@/pages/InvitationsPage";
 import RejectedEventsPage from "@/pages/RejectedEventsPage";
+import PendingApprovalPage from "@/pages/PendingApprovalPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +37,7 @@ const queryClient = new QueryClient();
  * but OTP has not yet been confirmed.
  */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, otpPending, isLoading } = useAuth();
+  const { isAuthenticated, otpPending, isLoading, profile, role } = useAuth();
 
   if (isLoading) return null;
 
@@ -46,6 +47,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (otpPending) {
     return <Navigate to="/verify-otp" replace />;
+  }
+
+  if (profile && !profile.is_approved && role !== 'admin') {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   return <>{children}</>;
@@ -65,6 +70,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/verify-otp" element={<OtpVerificationPage />} />
+              <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
               {/* Protected routes — require auth + completed OTP */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

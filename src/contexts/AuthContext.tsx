@@ -13,6 +13,7 @@ interface Profile {
   name: string;
   department?: string;
   avatar_url?: string;
+  is_approved?: boolean;
 }
 
 interface AuthContextType {
@@ -71,14 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
+          await fetchUserData(session.user.id);
         } else {
           setProfile(null);
           setRole(null);
@@ -90,11 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        await fetchUserData(session.user.id);
       }
       setIsLoading(false);
     });
@@ -163,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Await OTP dispatch so we can surface the fallback code when email isn't configured
     if (data.user) {
-      const otpResult = await dispatchOtp(data.user).catch(() => ({ error: null }));
+      const otpResult = await dispatchOtp(data.user).catch(() => ({ error: null } as { error: string | null; fallbackCode?: string; emailSent?: boolean; }));
       if (otpResult.fallbackCode && !otpResult.emailSent) {
         // Store fallback code so OtpVerificationPage can display it
         sessionStorage.setItem('otp_fallback_code', otpResult.fallbackCode);
