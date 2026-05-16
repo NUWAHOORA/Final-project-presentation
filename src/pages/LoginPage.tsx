@@ -19,18 +19,14 @@ export default function LoginPage() {
   const [department, setDepartment] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, resetPassword, isAuthenticated, otpPending } = useAuth();
+  const { signIn, signUp, resetPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      if (otpPending) {
-        navigate('/verify-otp', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, otpPending, navigate]);
+  }, [isAuthenticated, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,8 +39,8 @@ export default function LoginPage() {
         if (error) {
           toast.error(error.message || 'Failed to sign in');
         } else {
-          toast.success('Verification code sent to your email!');
-          navigate('/verify-otp', { replace: true });
+          toast.success('Signed in successfully!');
+          navigate('/dashboard', { replace: true });
         }
       } else {
         if (!name.trim()) {

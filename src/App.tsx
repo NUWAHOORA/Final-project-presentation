@@ -8,7 +8,6 @@ import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 
 import LoginPage from "@/pages/LoginPage";
-import OtpVerificationPage from "@/pages/OtpVerificationPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import EventsPage from "@/pages/EventsPage";
@@ -32,21 +31,13 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-/**
- * Guard that redirects to /verify-otp if credentials are verified
- * but OTP has not yet been confirmed.
- */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, otpPending, isLoading, profile, role } = useAuth();
+  const { isAuthenticated, isLoading, profile, role } = useAuth();
 
   if (isLoading) return null;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (otpPending) {
-    return <Navigate to="/verify-otp" replace />;
   }
 
   if (profile && !profile.is_approved && role !== 'admin') {
@@ -69,10 +60,9 @@ const App = () => (
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/verify-otp" element={<OtpVerificationPage />} />
               <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
-              {/* Protected routes — require auth + completed OTP */}
+              {/* Protected routes */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
               <Route path="/events/create" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
