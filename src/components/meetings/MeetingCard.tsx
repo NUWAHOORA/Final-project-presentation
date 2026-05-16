@@ -55,8 +55,15 @@ export function MeetingCard({
   showEventTitle = true,
 }: MeetingCardProps) {
   const { user, role } = useAuth();
-  const meetingDate = parseISO(meeting.meeting_date);
-  const isPastMeeting = isPast(meetingDate) && !isToday(meetingDate);
+  let meetingDate: Date;
+  let isPastMeeting = false;
+  try {
+    meetingDate = parseISO(meeting.meeting_date);
+    isPastMeeting = isPast(meetingDate) && !isToday(meetingDate);
+  } catch (e) {
+    meetingDate = new Date(); // fallback
+    isPastMeeting = false;
+  }
   const canManage = user?.id === meeting.created_by || role === 'admin';
 
   const getDateLabel = () => {
