@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import LoginPage from "@/pages/LoginPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
@@ -50,41 +51,43 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <ViewModeProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/pending-approval" element={<PendingApprovalPage />} />
+      <ErrorBoundary>
+        <AuthProvider>
+          <ViewModeProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
-              {/* Protected routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
-              <Route path="/events/create" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
-              <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-              <Route path="/tickets" element={<ProtectedRoute><TicketsPage /></ProtectedRoute>} />
-              <Route path="/approvals" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} />
-              <Route path="/registrations" element={<ProtectedRoute><RegistrationsPage /></ProtectedRoute>} />
-              <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
-              <Route path="/mark-attendance/:eventId" element={<ProtectedRoute><MarkAttendancePage /></ProtectedRoute>} />
-              <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
-              <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
-              <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
-              <Route path="/email-settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
-              <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
-              <Route path="/rejected-events" element={<ProtectedRoute><RejectedEventsPage /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </ViewModeProvider>
-      </AuthProvider>
+                {/* Protected routes */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+                <Route path="/events/create" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
+                <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                <Route path="/tickets" element={<ProtectedRoute><TicketsPage /></ProtectedRoute>} />
+                <Route path="/approvals" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} />
+                <Route path="/registrations" element={<ProtectedRoute><RegistrationsPage /></ProtectedRoute>} />
+                <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
+                <Route path="/mark-attendance/:eventId" element={<ProtectedRoute><MarkAttendancePage /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+                <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
+                <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
+                <Route path="/email-settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
+                <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
+                <Route path="/rejected-events" element={<ProtectedRoute><RejectedEventsPage /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ViewModeProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );
