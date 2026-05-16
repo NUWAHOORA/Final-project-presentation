@@ -92,7 +92,15 @@ export function EventsByMonthList({ events }: EventsByMonthListProps) {
                           {event.date && (
                             <div className="flex items-center gap-1">
                               <CalendarDays className="w-4 h-4" />
-                              {format(parseISO(event.date), 'MMM d, yyyy')}
+                              {(() => {
+                                try {
+                                  const d = parseISO(event.date);
+                                  if (isNaN(d.getTime())) return 'TBD';
+                                  return format(d, 'MMM d, yyyy');
+                                } catch {
+                                  return 'TBD';
+                                }
+                              })()}
                             </div>
                           )}
                           {event.venue && (
