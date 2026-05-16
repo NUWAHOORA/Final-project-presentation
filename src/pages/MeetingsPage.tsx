@@ -33,16 +33,33 @@ export default function MeetingsPage() {
   const isLoading = isAdmin || isOrganizer ? loadingAll : loadingUser;
 
   const upcomingMeetings = meetings?.filter(m => {
-    const date = parseISO(m.meeting_date);
-    return isToday(date) || isFuture(date);
+    try {
+      if (!m.meeting_date) return false;
+      const date = parseISO(m.meeting_date);
+      return isToday(date) || isFuture(date);
+    } catch {
+      return false;
+    }
   }) || [];
 
   const pastMeetings = meetings?.filter(m => {
-    const date = parseISO(m.meeting_date);
-    return isPast(date) && !isToday(date);
+    try {
+      if (!m.meeting_date) return false;
+      const date = parseISO(m.meeting_date);
+      return isPast(date) && !isToday(date);
+    } catch {
+      return false;
+    }
   }) || [];
 
-  const todayMeetings = meetings?.filter(m => isToday(parseISO(m.meeting_date))) || [];
+  const todayMeetings = meetings?.filter(m => {
+    try {
+      if (!m.meeting_date) return false;
+      return isToday(parseISO(m.meeting_date));
+    } catch {
+      return false;
+    }
+  }) || [];
 
   const handleJoin = (meetingId: string, link: string) => {
     markAttendance.mutate({ meetingId, action: 'join' });

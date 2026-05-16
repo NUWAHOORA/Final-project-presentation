@@ -61,8 +61,13 @@ export default function DashboardPage() {
   }).slice(0, 3);
 
   const upcomingMeetings = meetings?.filter(m => {
-    const date = parseISO(m.meeting_date);
-    return (isToday(date) || isFuture(date)) && m.status !== 'ended';
+    try {
+      if (!m.meeting_date) return false;
+      const date = parseISO(m.meeting_date);
+      return (isToday(date) || isFuture(date)) && m.status !== 'ended';
+    } catch {
+      return false;
+    }
   }).slice(0, 3) || [];
 
 
