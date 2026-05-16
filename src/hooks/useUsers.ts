@@ -182,10 +182,9 @@ export function useApproveUser() {
         throw new Error('Not authenticated');
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_approved: true })
-        .eq('user_id', userId);
+      const { error } = await supabase.rpc('approve_user_admin' as any, {
+        user_id_to_approve: userId
+      });
 
       if (error) {
         throw error;
@@ -195,8 +194,9 @@ export function useApproveUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('User approved successfully');
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to approve user');
+    onError: (error: any) => {
+      console.error("Full approval error:", error);
+      toast.error(`Error: ${error?.message || JSON.stringify(error)}`);
     }
   });
 }
