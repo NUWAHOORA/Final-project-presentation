@@ -37,7 +37,6 @@ import { supabase } from '@/integrations/supabase/client';
 const meetingSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
-  meeting_link: z.string().url('Please enter a valid URL'),
   meeting_date: z.string().min(1, 'Date is required'),
   meeting_time: z.string().min(1, 'Time is required'),
   duration_minutes: z.number().min(15).max(480),
@@ -75,7 +74,6 @@ export function ScheduleMeetingDialog({
     defaultValues: {
       title: `Planning Meeting - ${eventTitle}`,
       description: '',
-      meeting_link: '',
       meeting_date: '',
       meeting_time: '10:00',
       duration_minutes: 60,
@@ -111,11 +109,15 @@ export function ScheduleMeetingDialog({
   };
 
   const onSubmit = async (data: MeetingFormData) => {
+    // Automatically generate a unique Jitsi Meet link
+    const uniqueRoomId = `smart-uems-${eventId.slice(0, 8)}-${Date.now()}`;
+    const generatedLink = `https://meet.jit.si/${uniqueRoomId}`;
+
     await createMeeting.mutateAsync({
       event_id: eventId,
       title: data.title,
       description: data.description,
-      meeting_link: data.meeting_link,
+      meeting_link: generatedLink,
       meeting_date: data.meeting_date,
       meeting_time: data.meeting_time,
       duration_minutes: data.duration_minutes,
@@ -165,26 +167,6 @@ export function ScheduleMeetingDialog({
                         <Textarea
                           placeholder="Brief description of the meeting"
                           className="min-h-[80px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="meeting_link"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <LinkIcon className="w-4 h-4" />
-                        Meeting Link (Zoom/Google Meet)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://zoom.us/j/... or https://meet.google.com/..."
                           {...field}
                         />
                       </FormControl>
