@@ -99,8 +99,13 @@ export function ScheduleMeetingDialog({
 
     if (open) {
       fetchUsers();
+      // Auto-generate unique system meeting link via Jitsi Meet
+      const randomId = Math.random().toString(36).substring(2, 9);
+      const cleanTitle = eventTitle.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      const generatedLink = `https://meet.jit.si/ucu-planning-${cleanTitle || 'meeting'}-${randomId}`;
+      form.setValue('meeting_link', generatedLink, { shouldValidate: true });
     }
-  }, [open]);
+  }, [open, eventTitle, form]);
 
   const toggleUser = (userId: string) => {
     setSelectedUsers(prev =>
@@ -179,12 +184,13 @@ export function ScheduleMeetingDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <LinkIcon className="w-4 h-4" />
-                        Meeting Link (Zoom/Google Meet)
+                        <LinkIcon className="w-4 h-4 text-primary" />
+                        Meeting Link (System-Generated)
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                          readOnly
+                          className="bg-muted text-muted-foreground cursor-not-allowed font-mono text-xs"
                           {...field}
                         />
                       </FormControl>
