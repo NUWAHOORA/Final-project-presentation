@@ -388,7 +388,7 @@ export default function EventDetailPage() {
 
 
                       {/* Join Meeting Button (Participants) */}
-                      {event.meeting_status === 'live' && (
+                      {(event.meeting_status === 'live' || event.meeting_status === 'scheduled') && (
                         <Button
                           onClick={() => {
                             if (event.meeting_link) window.open(event.meeting_link, '_blank');

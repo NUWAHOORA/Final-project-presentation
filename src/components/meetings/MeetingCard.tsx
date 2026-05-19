@@ -61,7 +61,7 @@ export function MeetingCard({
   const isPastMeeting = isValidDate && isPast(meetingDate) && !isToday(meetingDate);
   const isTodayMeeting = isValidDate && isToday(meetingDate);
   const isTomorrowMeeting = isValidDate && isTomorrow(meetingDate);
-  const canManage = user?.id === meeting.created_by || role === 'admin';
+  const canManage = user?.id === meeting.created_by || role === 'admin' || role === 'organizer';
 
   const getDateLabel = () => {
     if (!isValidDate) return 'Date TBA';

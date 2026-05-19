@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
-import { Calendar, Clock, MapPin, Users, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, ArrowRight, Video, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getDynamicEventStatus, getDynamicStatusDisplay, dynamicStatusColors } from '@/utils/eventStatus';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUpdateEventMeetingStatus } from '@/hooks/useEvents';
 
 interface EventCardProps {
   event: Event;
@@ -25,6 +27,8 @@ const categoryColors: Record<string, string> = {
 
 
 export function EventCard({ event, index = 0 }: EventCardProps) {
+  const { user, role } = useAuth();
+  const updateMeetingStatus = useUpdateEventMeetingStatus();
   const spotsLeft = event.capacity - event.registeredCount;
   const isAlmostFull = spotsLeft < event.capacity * 0.1;
 
@@ -87,22 +91,92 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <span className={cn(
-              "text-sm font-medium",
-              isAlmostFull ? "text-warning" : "text-muted-foreground"
-            )}>
-              {event.registeredCount}/{event.capacity} registered
-            </span>
+        <div className="flex flex-col gap-3 pt-4 border-t border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className={cn(
+                "text-sm font-medium",
+                isAlmostFull ? "text-warning" : "text-muted-foreground"
+              )}>
+                {event.registeredCount}/{event.capacity} registered
+              </span>
+            </div>
+            <Link to={`/events/${event.id}`}>
+              <Button variant="ghost" size="sm" className="group/btn">
+                Details
+                <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
-          <Link to={`/events/${event.id}`}>
-            <Button variant="ghost" size="sm" className="group/btn">
-              Details
-              <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+
+          {/* Start/Join Online Meeting directly from card */}
+          {event.category === 'online_meeting' && event.meeting_link && (
+            <div className="flex gap-2 w-full mt-1">
+              {(user?.id === event.organizerId || role === 'admin') ? (
+                <>
+                  {event.meeting_status === 'scheduled' && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        updateMeetingStatus.mutate({ id: event.id, status: 'live' });
+                        window.open(event.meeting_link!, '_blank');
+                      }}
+                      className="gradient-primary text-white flex-1 text-xs font-semibold"
+                      disabled={updateMeetingStatus.isPending}
+                    >
+                      <Video className="w-3.5 h-3.5 mr-1" />
+                      Start Meeting
+                    </Button>
+                  )}
+                  {event.meeting_status === 'live' && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => window.open(event.meeting_link!, '_blank')}
+                        className="gradient-success text-white flex-1 text-xs font-semibold"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                        Join Meeting
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateMeetingStatus.mutate({ id: event.id, status: 'ended' })}
+                        className="text-xs font-semibold text-destructive hover:bg-destructive/10"
+                        disabled={updateMeetingStatus.isPending}
+                      >
+                        End
+                      </Button>
+                    </>
+                  )}
+                  {event.meeting_status === 'ended' && (
+                    <Badge variant="outline" className="w-full justify-center text-xs py-1">
+                      Meeting Ended
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <>
+                  {(event.meeting_status === 'live' || event.meeting_status === 'scheduled') && (
+                    <Button
+                      size="sm"
+                      onClick={() => window.open(event.meeting_link!, '_blank')}
+                      className="gradient-success text-white flex-1 text-xs font-semibold"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                      Join Meeting
+                    </Button>
+                  )}
+                  {event.meeting_status === 'ended' && (
+                    <Badge variant="outline" className="w-full justify-center text-xs py-1">
+                      Meeting Ended
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

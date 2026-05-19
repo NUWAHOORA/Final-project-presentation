@@ -30,6 +30,8 @@ export interface Event {
   organizerName: string;
   imageUrl?: string;
   qrCode?: string;
+  meeting_link?: string | null;
+  meeting_status?: string | null;
   total_resource_cost?: number;
   createdAt: string;
 }

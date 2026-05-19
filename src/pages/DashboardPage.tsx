@@ -341,6 +341,8 @@ export default function DashboardPage() {
                     organizerName: event.organizer_name || 'Unknown',
                     imageUrl: event.image_url || undefined,
                     qrCode: event.qr_code || undefined,
+                    meeting_link: event.meeting_link,
+                    meeting_status: event.meeting_status,
                     createdAt: event.created_at
                   }}
                   index={index}
@@ -395,6 +397,8 @@ export default function DashboardPage() {
                       organizerName: event.organizer_name || 'Unknown',
                       imageUrl: event.image_url || undefined,
                       qrCode: event.qr_code || undefined,
+                      meeting_link: event.meeting_link,
+                      meeting_status: event.meeting_status,
                       createdAt: event.created_at
                     }}
                     index={index}
