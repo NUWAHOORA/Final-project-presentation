@@ -9,7 +9,6 @@ import {
   Bell,
   QrCode,
   Plus,
-  UserPlus,
   CheckCircle,
   LogOut,
   ChevronLeft,
@@ -39,7 +38,7 @@ interface SidebarLink {
 }
 
 const sidebarLinks: Record<string, SidebarLink[]> = {
-    admin: [
+  admin: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'All Events', path: '/events' },
     { icon: CheckCircle, label: 'Approvals', path: '/approvals' },
@@ -49,9 +48,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
     { icon: Mail, label: 'Email Settings', path: '/email-settings' },
-    { icon: UserPlus, label: 'Invitations', path: '/invitations' },
-],
-
+  ],
   organizer: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'My Events', path: '/events' },
@@ -61,7 +58,6 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: BarChart3, label: 'Reports', path: '/analytics' },
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
     { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
-    { icon: UserPlus, label: 'Invitations', path: '/invitations' },
   ],
   user: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },

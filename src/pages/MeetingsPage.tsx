@@ -13,7 +13,7 @@ import {
   useMarkAttendance,
 } from '@/hooks/useMeetings';
 import { useAuth } from '@/contexts/AuthContext';
-import { parseISO, isToday, isFuture, isPast } from 'date-fns';
+import { parseISO, isToday, isFuture, isPast, isValid } from 'date-fns';
 
 export default function MeetingsPage() {
   const { role } = useAuth();
@@ -33,32 +33,24 @@ export default function MeetingsPage() {
   const isLoading = isAdmin || isOrganizer ? loadingAll : loadingUser;
 
   const upcomingMeetings = meetings?.filter(m => {
-    try {
-      if (!m.meeting_date) return false;
-      const date = parseISO(m.meeting_date);
-      return isToday(date) || isFuture(date);
-    } catch {
-      return false;
-    }
+    if (!m.meeting_date) return false;
+    const date = parseISO(m.meeting_date);
+    if (!isValid(date)) return false;
+    return isToday(date) || isFuture(date);
   }) || [];
 
   const pastMeetings = meetings?.filter(m => {
-    try {
-      if (!m.meeting_date) return false;
-      const date = parseISO(m.meeting_date);
-      return isPast(date) && !isToday(date);
-    } catch {
-      return false;
-    }
+    if (!m.meeting_date) return false;
+    const date = parseISO(m.meeting_date);
+    if (!isValid(date)) return false;
+    return isPast(date) && !isToday(date);
   }) || [];
 
   const todayMeetings = meetings?.filter(m => {
-    try {
-      if (!m.meeting_date) return false;
-      return isToday(parseISO(m.meeting_date));
-    } catch {
-      return false;
-    }
+    if (!m.meeting_date) return false;
+    const date = parseISO(m.meeting_date);
+    if (!isValid(date)) return false;
+    return isToday(date);
   }) || [];
 
   const handleJoin = (meetingId: string, link: string) => {
@@ -155,7 +147,11 @@ export default function MeetingsPage() {
                 {upcomingMeetings.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {upcomingMeetings
-                      .filter(m => !isToday(parseISO(m.meeting_date)))
+                      .filter(m => {
+                        if (!m.meeting_date) return true;
+                        const d = parseISO(m.meeting_date);
+                        return !isValid(d) || !isToday(d);
+                      })
                       .map(meeting => (
                         <MeetingCard
                           key={meeting.id}

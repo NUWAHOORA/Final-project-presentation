@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { 
@@ -93,13 +93,8 @@ export function EventsByMonthList({ events }: EventsByMonthListProps) {
                             <div className="flex items-center gap-1">
                               <CalendarDays className="w-4 h-4" />
                               {(() => {
-                                try {
-                                  const d = parseISO(event.date);
-                                  if (isNaN(d.getTime())) return 'TBD';
-                                  return format(d, 'MMM d, yyyy');
-                                } catch {
-                                  return 'TBD';
-                                }
+                                const parsedDate = parseISO(event.date);
+                                return isValid(parsedDate) ? format(parsedDate, 'MMM d, yyyy') : 'Date TBA';
                               })()}
                             </div>
                           )}

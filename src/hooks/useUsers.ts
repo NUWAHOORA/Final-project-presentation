@@ -11,7 +11,6 @@ export interface UserWithRole {
   avatar_url: string | null;
   created_at: string;
   role: 'admin' | 'organizer' | 'user' | 'student';
-  is_approved?: boolean;
 }
 
 export function useUsers() {
@@ -44,7 +43,6 @@ export function useUsers() {
         department: profile.department,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
-        is_approved: profile.is_approved,
         role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'user' | 'student') || 'user'
       }));
     }
@@ -167,36 +165,6 @@ export function useUpdateRole() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to update user role');
-    }
-  });
-}
-
-export function useApproveUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
-      const { error } = await supabase.rpc('approve_user_admin' as any, {
-        user_id_to_approve: userId
-      });
-
-      if (error) {
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User approved successfully');
-    },
-    onError: (error: any) => {
-      console.error("Full approval error:", error);
-      toast.error(`Error: ${error?.message || JSON.stringify(error)}`);
     }
   });
 }

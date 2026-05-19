@@ -23,7 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
-import { parseISO, isToday, isFuture, startOfDay } from 'date-fns';
+import { parseISO, isToday, isFuture, startOfDay, isValid } from 'date-fns';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { EventsByMonthList } from '@/components/dashboard/EventsByMonthList';
 
@@ -48,26 +48,29 @@ export default function DashboardPage() {
   
   const upcomingEvents = approvedEvents.filter(e => {
     try {
-      const d = startOfDay(parseISO(e.date));
+      if (!e.date) return false;
+      const parsed = parseISO(e.date);
+      if (!isValid(parsed)) return false;
+      const d = startOfDay(parsed);
       return d.getTime() >= startOfDay(new Date()).getTime();
-    } catch { return true; }
+    } catch { return false; }
   }).slice(0, 3);
 
   const pastEvents = approvedEvents.filter(e => {
     try {
-      const d = startOfDay(parseISO(e.date));
+      if (!e.date) return false;
+      const parsed = parseISO(e.date);
+      if (!isValid(parsed)) return false;
+      const d = startOfDay(parsed);
       return d.getTime() < startOfDay(new Date()).getTime();
     } catch { return false; }
   }).slice(0, 3);
 
   const upcomingMeetings = meetings?.filter(m => {
-    try {
-      if (!m.meeting_date) return false;
-      const date = parseISO(m.meeting_date);
-      return (isToday(date) || isFuture(date)) && m.status !== 'ended';
-    } catch {
-      return false;
-    }
+    if (!m.meeting_date) return false;
+    const date = parseISO(m.meeting_date);
+    if (!isValid(date)) return false;
+    return (isToday(date) || isFuture(date)) && m.status !== 'ended';
   }).slice(0, 3) || [];
 
 

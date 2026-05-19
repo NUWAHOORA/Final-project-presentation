@@ -8,7 +8,10 @@ export function getDynamicEventStatus(baseStatus: string, dateString: string): D
   }
   
   try {
+    if (!dateString) return baseStatus as DynamicStatus;
     const eventDate = parseISO(dateString);
+    if (isNaN(eventDate.getTime())) return baseStatus as DynamicStatus;
+    
     const today = startOfDay(new Date());
     const eventDay = startOfDay(eventDate);
     

@@ -38,10 +38,9 @@ interface UsersTableProps {
   isAdmin: boolean;
   onDeleteUser: (user: UserWithRole) => void;
   onEditRole: (user: UserWithRole) => void;
-  onApproveUser?: (user: UserWithRole) => void;
 }
 
-export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser, onEditRole, onApproveUser }: UsersTableProps) {
+export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser, onEditRole }: UsersTableProps) {
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <Table>
@@ -51,7 +50,6 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser, onEdit
             <TableHead>Role</TableHead>
             <TableHead className="hidden md:table-cell">Department</TableHead>
             <TableHead className="hidden lg:table-cell">Joined</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -100,48 +98,25 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser, onEdit
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    {user.is_approved ? (
-                      <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-900/20 dark:text-green-400">
-                        Approved
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-400">
-                        Pending
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
                     {isAdmin && !isCurrentUser && (
-                      <div className="flex items-center gap-2">
-                        {!user.is_approved && onApproveUser && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-900 dark:text-green-400 dark:hover:bg-green-900/20"
-                            onClick={() => onApproveUser(user)}
-                          >
-                            Approve
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="w-4 h-4" />
                           </Button>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEditRole(user)}>Edit Role</DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => onDeleteUser(user)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEditRole(user)}>Edit Role</DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => onDeleteUser(user)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </TableCell>
                 </TableRow>

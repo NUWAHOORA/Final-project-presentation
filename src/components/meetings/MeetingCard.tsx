@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { format, parseISO, isToday, isTomorrow, isPast, isValid } from 'date-fns';
 import {
   Video,
   Calendar,
@@ -55,20 +55,18 @@ export function MeetingCard({
   showEventTitle = true,
 }: MeetingCardProps) {
   const { user, role } = useAuth();
-  let meetingDate: Date;
-  let isPastMeeting = false;
-  try {
-    meetingDate = parseISO(meeting.meeting_date);
-    isPastMeeting = isPast(meetingDate) && !isToday(meetingDate);
-  } catch (e) {
-    meetingDate = new Date(); // fallback
-    isPastMeeting = false;
-  }
+  const meetingDateStr = meeting.meeting_date || '';
+  const meetingDate = parseISO(meetingDateStr);
+  const isValidDate = isValid(meetingDate);
+  const isPastMeeting = isValidDate && isPast(meetingDate) && !isToday(meetingDate);
+  const isTodayMeeting = isValidDate && isToday(meetingDate);
+  const isTomorrowMeeting = isValidDate && isTomorrow(meetingDate);
   const canManage = user?.id === meeting.created_by || role === 'admin';
 
   const getDateLabel = () => {
-    if (isToday(meetingDate)) return 'Today';
-    if (isTomorrow(meetingDate)) return 'Tomorrow';
+    if (!isValidDate) return 'Date TBA';
+    if (isTodayMeeting) return 'Today';
+    if (isTomorrowMeeting) return 'Tomorrow';
     return format(meetingDate, 'EEE, MMM d');
   };
 
@@ -99,7 +97,7 @@ export function MeetingCard({
       )}>
         <div className={cn(
           "h-1",
-          isToday(meetingDate) ? "bg-success" : isPastMeeting ? "bg-muted" : "bg-primary"
+          isTodayMeeting ? "bg-success" : isPastMeeting ? "bg-muted" : "bg-primary"
         )} />
         
         <CardHeader className="pb-2">
@@ -116,7 +114,7 @@ export function MeetingCard({
               )}
             </div>
             <div className="flex items-center gap-1">
-              {isToday(meetingDate) && !isPastMeeting && (
+              {isTodayMeeting && !isPastMeeting && (
                 <Badge className="bg-success text-success-foreground">
                   Today
                 </Badge>

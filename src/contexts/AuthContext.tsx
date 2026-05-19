@@ -11,7 +11,6 @@ interface Profile {
   name: string;
   department?: string;
   avatar_url?: string;
-  is_approved?: boolean;
 }
 
 interface AuthContextType {
@@ -38,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string) => {
     try {
+      // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -48,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(profileData as Profile);
       }
 
+      // Fetch role
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
@@ -63,13 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchUserData(session.user.id);
+          // Defer Supabase calls with setTimeout
+          setTimeout(() => {
+            fetchUserData(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
           setRole(null);
@@ -78,11 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchUserData(session.user.id);
+        fetchUserData(session.user.id);
       }
       setIsLoading(false);
     });
@@ -91,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, name: string, department: string, role: UserRole = 'user') => {
+    // Use the deployed Vercel URL so that email verification works across all devices
     const redirectUrl = `https://final-project-presentation.vercel.app/`;
 
     const { error } = await supabase.auth.signUp({
@@ -106,11 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-    if (error) return { error };
-
-    return { error: null };
+    return { error };
   };
 
   const signOut = async () => {

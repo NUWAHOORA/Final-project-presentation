@@ -29,9 +29,6 @@ interface EmailNotificationRequest {
   organizer_name?: string;
   status?: string;
   additional_message?: string;
-  // PDF attachment support (event_invitation)
-  pdf_attachment?: string;  // base64 encoded PDF
-  pdf_filename?: string;
 }
 
 // Email templates for different notification types
@@ -292,55 +289,7 @@ function getEmailTemplate(data: EmailNotificationRequest): string {
       `;
       break;
 
-    case "event_invitation":
-      content = `
-        <div class="header" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-          <h1>🎟️ You're Invited!</h1>
-        </div>
-        <div class="content">
-          <p>Hello ${data.recipient_name || "there"},</p>
-          <p>You have received a personal invitation to attend an upcoming event:</p>
-          <div class="details">
-            <p><strong>📌 Event:</strong> ${data.event_title}</p>
-            <p><strong>📅 Date:</strong> ${data.event_date}</p>
-            <p><strong>🕐 Time:</strong> ${data.event_time}</p>
-            <p><strong>📍 Venue:</strong> ${data.event_venue}</p>
-            ${data.organizer_name ? `<p><strong>👤 Organizer:</strong> ${data.organizer_name}</p>` : ""}
-          </div>
-          ${data.additional_message ? `
-          <div style="background: #f0f4ff; border-left: 4px solid #6366f1; padding: 16px; border-radius: 4px; margin: 20px 0;">
-            <p style="margin:0; font-style: italic; color: #4338ca;">"${data.additional_message}"</p>
-          </div>` : ""}
-          <p>We would love to have you join us for this special event!</p>
-          <p style="color: #6b7280; font-size: 14px; margin-top: 24px;">
-            📎 <em>A detailed event invitation PDF may be attached to this email for your convenience.</em>
-          </p>
-          <a href="${baseUrl}/events/${data.event_id}" class="button">View Event Details</a>
-        </div>
-      `;
-      break;
-
-    case "otp_verification":
-      content = `
-        <div class="header" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-          <h1>🔐 Verification Code</h1>
-        </div>
-        <div class="content">
-          <p>Hello ${data.recipient_name || "there"},</p>
-          <p>Use the code below to complete your sign-in to the Smart University Event Management System.</p>
-          <div class="details" style="text-align: center; padding: 30px;">
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Your verification code</p>
-            <p style="font-size: 48px; font-weight: 800; letter-spacing: 12px; color: #6366f1; margin: 0; font-family: 'Courier New', monospace;">${data.additional_message}</p>
-            <p style="font-size: 13px; color: #6b7280; margin-top: 16px;">⏱ This code expires in <strong>5 minutes</strong></p>
-          </div>
-          <p style="font-size: 13px; color: #6b7280;">If you did not attempt to sign in, please ignore this email and consider changing your password immediately.</p>
-          <p style="font-size: 13px; color: #dc2626; font-weight: 600;">⚠️ Never share this code with anyone. Our team will never ask for it.</p>
-        </div>
-      `;
-      break;
-
     default:
-
       content = `
         <div class="header">
           <h1>📬 Notification</h1>
@@ -429,27 +378,15 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate email content
     const htmlContent = getEmailTemplate(data);
 
-    // Build send payload — attach PDF if provided
-    const sendPayload: Record<string, any> = {
+    // Send the email
+    console.log(`Sending email to ${data.recipient_email}`);
+    const emailResponse = await resend.emails.send({
       from: "University Events <onboarding@resend.dev>",
       to: [data.recipient_email],
       subject: data.subject,
       html: htmlContent,
       tags: [{ name: "notification_type", value: data.notification_type }],
-    };
-
-    if (data.pdf_attachment && data.pdf_filename) {
-      sendPayload.attachments = [
-        {
-          filename: data.pdf_filename,
-          content: data.pdf_attachment,
-        },
-      ];
-    }
-
-    // Send the email
-    console.log(`Sending email to ${data.recipient_email}`);
-    const emailResponse = await resend.emails.send(sendPayload as any);
+    });
 
     if ("error" in emailResponse && emailResponse.error) {
       console.error("Resend error:", emailResponse.error);

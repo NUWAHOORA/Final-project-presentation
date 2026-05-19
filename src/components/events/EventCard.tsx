@@ -74,18 +74,7 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            <span>
-              {(() => {
-                try {
-                  if (!event.date) return 'TBD';
-                  const d = new Date(event.date);
-                  if (isNaN(d.getTime())) return 'TBD';
-                  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                } catch {
-                  return 'TBD';
-                }
-              })()}
-            </span>
+            <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4 text-primary" />
