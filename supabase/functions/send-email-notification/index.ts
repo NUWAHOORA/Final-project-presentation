@@ -33,7 +33,7 @@ interface EmailNotificationRequest {
 
 // Email templates for different notification types
 function getEmailTemplate(data: EmailNotificationRequest): string {
-  const baseUrl = Deno.env.get("SITE_URL") || "https://uluxmzitjdxcxitmbtwq.supabase.co";
+  const baseUrl = Deno.env.get("SITE_URL") || "https://qqmzhdnofylwjkyqeqei.supabase.co";
   
   const styles = `
     <style>
