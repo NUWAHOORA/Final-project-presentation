@@ -18,8 +18,8 @@ export interface Meeting {
   updated_at: string;
   status: 'scheduled' | 'live' | 'ended';
   event_title?: string;
-
   creator_name?: string;
+  participant_status?: 'invited' | 'accepted' | 'declined';
 }
 
 export interface MeetingParticipant {
@@ -70,6 +70,7 @@ export function useMeetings(eventId?: string) {
         creator_name: profileMap.get(meeting.created_by) || 'Unknown',
       })) as Meeting[];
     },
+    refetchInterval: 5000,
   });
 }
 
@@ -142,7 +143,7 @@ export function useUserMeetings() {
       // Get meetings where user is a participant
       const { data: participations, error: partError } = await supabase
         .from('meeting_participants')
-        .select('meeting_id')
+        .select('meeting_id, status')
         .eq('user_id', user.id);
 
       if (partError) throw partError;
@@ -199,13 +200,19 @@ export function useUserMeetings() {
       const eventMap = new Map(events?.map(e => [e.id, e.title]) || []);
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
 
+      const participantStatusMap = new Map(
+        participations?.map(p => [p.meeting_id, p.status]) || []
+      );
+
       return meetings.map(meeting => ({
         ...meeting,
         event_title: eventMap.get(meeting.event_id) || 'Unknown Event',
         creator_name: profileMap.get(meeting.created_by) || 'Unknown',
+        participant_status: participantStatusMap.get(meeting.id) || 'accepted',
       })) as Meeting[];
     },
     enabled: !!user,
+    refetchInterval: 5000,
   });
 }
 
@@ -303,6 +310,7 @@ export function useCreateMeeting() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       queryClient.invalidateQueries({ queryKey: ['meetings', variables.event_id] });
+      queryClient.invalidateQueries({ queryKey: ['user-meetings'] });
       toast({
         title: 'Meeting scheduled',
         description: 'Participants have been notified.',
@@ -387,6 +395,7 @@ export function useUpdateMeeting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-meetings'] });
       toast({
         title: 'Meeting updated',
         description: 'Meeting details have been saved.',
@@ -440,7 +449,7 @@ export function useDeleteMeeting() {
       // Send cancellation emails after successful deletion
       if (meetingData && profiles && profiles.length > 0) {
         const formattedDate = new Date(meetingData.meeting_date).toLocaleDateString('en-US', {
-          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
         });
 
         for (const profile of profiles) {
@@ -462,6 +471,7 @@ export function useDeleteMeeting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-meetings'] });
       toast({
         title: 'Meeting deleted',
         description: 'The meeting has been removed.',
@@ -541,16 +551,31 @@ export function useMarkAttendance() {
         ? { attended: true, joined_at: new Date().toISOString() }
         : { left_at: new Date().toISOString() };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('meeting_participants')
         .update(updates)
         .eq('meeting_id', meetingId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select();
 
       if (error) throw error;
+
+      if (action === 'join' && (!data || data.length === 0)) {
+        const { error: insertError } = await supabase
+          .from('meeting_participants')
+          .insert([{
+            meeting_id: meetingId,
+            user_id: user.id,
+            status: 'accepted',
+            attended: true,
+            joined_at: new Date().toISOString(),
+          }]);
+        if (insertError) throw insertError;
+      }
     },
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: ['meeting-participants', meetingId] });
+      queryClient.invalidateQueries({ queryKey: ['user-meetings'] });
     },
   });
 }

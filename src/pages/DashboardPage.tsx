@@ -21,7 +21,7 @@ import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
-import { useMeetings, useUserMeetings, useMarkAttendance } from '@/hooks/useMeetings';
+import { useMeetings, useUserMeetings, useMarkAttendance, useUpdateParticipantStatus } from '@/hooks/useMeetings';
 import { ReportDownloadDialog } from '@/components/reports/ReportDownloadDialog';
 import { parseISO, isToday, isFuture, startOfDay, isValid } from 'date-fns';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const { data: allMeetings, isLoading: loadingAll } = useMeetings();
   const { data: userMeetings, isLoading: loadingUser } = useUserMeetings();
   const markAttendance = useMarkAttendance();
+  const updateStatus = useUpdateParticipantStatus();
   const updateStatusMutation = useUpdateEventStatus();
   const { data: stats } = useDashboardStats();
   const [reportOpen, setReportOpen] = useState(false);
@@ -99,6 +100,14 @@ export default function DashboardPage() {
   const handleJoinMeeting = (meetingId: string, link: string) => {
     markAttendance.mutate({ meetingId, action: 'join' });
     window.open(link, '_blank');
+  };
+
+  const handleAccept = (meetingId: string) => {
+    updateStatus.mutate({ meetingId, status: 'accepted' });
+  };
+
+  const handleDecline = (meetingId: string) => {
+    updateStatus.mutate({ meetingId, status: 'declined' });
   };
 
 
@@ -281,7 +290,10 @@ export default function DashboardPage() {
                 <MeetingCard
                   key={meeting.id}
                   meeting={meeting}
+                  participantStatus={meeting.participant_status}
                   onJoin={handleJoinMeeting}
+                  onAccept={((role as any) === 'user' || (role as any) === 'student') ? handleAccept : undefined}
+                  onDecline={((role as any) === 'user' || (role as any) === 'student') ? handleDecline : undefined}
                 />
               ))}
             </div>

@@ -106,6 +106,7 @@ export default function MeetingsPage() {
                 <MeetingCard
                   key={meeting.id}
                   meeting={meeting}
+                  participantStatus={meeting.participant_status}
                   onJoin={handleJoin}
                   onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
                   onAccept={((role as any) === 'user' || (role as any) === 'student') ? handleAccept : undefined}
@@ -156,6 +157,7 @@ export default function MeetingsPage() {
                         <MeetingCard
                           key={meeting.id}
                           meeting={meeting}
+                          participantStatus={meeting.participant_status}
                           onJoin={handleJoin}
                           onDelete={isAdmin || isOrganizer ? (id) => deleteMeeting.mutate(id) : undefined}
                           onAccept={((role as any) === 'user' || (role as any) === 'student') ? handleAccept : undefined}
