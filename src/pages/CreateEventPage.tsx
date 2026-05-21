@@ -12,6 +12,7 @@ import {
   Loader2,
   Info,
   CalendarRange,
+  Video,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -30,7 +31,7 @@ import { useCreateEvent } from '@/hooks/useEvents';
 import { useCreateBulkResourceRequests } from '@/hooks/useResourceRequests';
 import { ResourceRequestSection, ResourceRequestItem } from '@/components/events/ResourceRequestSection';
 
-type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
+type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar' | 'online_meeting';
 
 
 const categories: { value: EventCategory; label: string }[] = [
@@ -40,6 +41,7 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'cultural', label: 'Cultural' },
   { value: 'workshop', label: 'Workshop' },
   { value: 'seminar', label: 'Seminar' },
+  { value: 'online_meeting', label: 'Online Meeting' },
 ];
 
 
@@ -59,6 +61,7 @@ export default function CreateEventPage() {
     venue: '',
     category: '' as EventCategory,
     capacity: '1000',
+    meeting_link: '',
   });
 
   // Auto-calculate event duration
@@ -87,6 +90,8 @@ export default function CreateEventPage() {
       venue: formData.venue,
       category: formData.category as EventCategory,
       capacity: parseInt(formData.capacity),
+      meeting_link: formData.category === 'online_meeting' ? formData.meeting_link : null,
+      meeting_status: formData.category === 'online_meeting' ? 'scheduled' : null,
     });
 
 
@@ -304,6 +309,24 @@ export default function CreateEventPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Meeting Link (Only if category is online_meeting) */}
+            {formData.category === 'online_meeting' && (
+              <div className="space-y-2">
+                <Label htmlFor="meeting_link" className="flex items-center gap-2">
+                  <Video className="w-4 h-4 text-primary" />
+                  Meeting Link
+                </Label>
+                <Input
+                  id="meeting_link"
+                  placeholder="https://zoom.us/j/... or Jitsi Meet link"
+                  value={formData.meeting_link}
+                  onChange={(e) => handleChange('meeting_link', e.target.value)}
+                  className="h-12"
+                  required={formData.category === 'online_meeting'}
+                />
+              </div>
+            )}
 
 
           </div>

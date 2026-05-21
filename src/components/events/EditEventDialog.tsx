@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, FileText, Tags, Loader2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, FileText, Tags, Loader2, Video } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -95,6 +95,7 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
       category: formData.category,
       capacity: parseInt(formData.capacity),
       meeting_link: formData.category === 'online_meeting' ? formData.meeting_link : null,
+      meeting_status: formData.category === 'online_meeting' ? (event.meeting_status || 'scheduled') : null,
     });
 
 
@@ -231,6 +232,24 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
               />
             </div>
           </div>
+
+          {/* Meeting Link (Only if category is online_meeting) */}
+          {formData.category === 'online_meeting' && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-meeting-link" className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-primary" />
+                Meeting Link
+              </Label>
+              <Input
+                id="edit-meeting-link"
+                placeholder="https://zoom.us/j/... or Jitsi Meet link"
+                value={formData.meeting_link}
+                onChange={(e) => handleChange('meeting_link', e.target.value)}
+                className="h-11"
+                required={formData.category === 'online_meeting'}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 justify-end pt-4">
