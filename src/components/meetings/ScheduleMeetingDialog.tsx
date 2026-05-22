@@ -35,7 +35,7 @@ import { useCreateMeeting } from '@/hooks/useMeetings';
 import { supabase } from '@/integrations/supabase/client';
 
 // Constant meeting link used for all scheduled meetings (unchangeable)
-const DEFAULT_MEETING_LINK = "https://zoom.us/j/1234567890";
+const DEFAULT_MEETING_LINK = "https://meet.jit.si/meeting123";
 
 const meetingSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
