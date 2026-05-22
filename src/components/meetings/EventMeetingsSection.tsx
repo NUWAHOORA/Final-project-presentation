@@ -88,19 +88,17 @@ export function EventMeetingsSection({
         </div>
 
         {canSchedule && (
-      {canSchedule && (
-        <Button size="sm" onClick={() => setShowScheduleDialog(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Schedule
-        </Button>
-      )}
-      {canSchedule && (
-        <Button size="sm" variant="outline" onClick={openCustomDialog} className="ml-2">
-          <Send className="w-4 h-4 mr-1" />
-          Send Custom Email
-        </Button>
-      )}
-        )}
+            <>
+              <Button size="sm" onClick={() => setShowScheduleDialog(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Schedule
+              </Button>
+              <Button size="sm" variant="outline" onClick={openCustomDialog} className="ml-2">
+                <Send className="w-4 h-4 mr-1" />
+                Send Custom Email
+              </Button>
+            </>
+          )}
       </div>
 
       {meetings && meetings.length > 0 ? (
@@ -133,6 +131,62 @@ export function EventMeetingsSection({
         eventId={eventId}
         eventTitle={eventTitle}
       />
+      {/* Custom Email Invitation Dialog */}
+      <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Custom Email Invitation</DialogTitle>
+          </DialogHeader>
+          <Form {...customForm}>
+            <form
+              onSubmit={customForm.handleSubmit(async (data) => {
+                await sendCustom.mutateAsync({
+                  senderEmail: data.senderEmail,
+                  recipientEmail: data.recipientEmail,
+                  subject: data.subject,
+                  message: data.message,
+                });
+                setShowCustomDialog(false);
+                customForm.reset();
+              })}
+              className="space-y-4 mt-4"
+            >
+              <FormField name="senderEmail" control={customForm.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sender Email</FormLabel>
+                  <FormControl><Input {...field} placeholder="you@domain.com" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField name="recipientEmail" control={customForm.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipient Email</FormLabel>
+                  <FormControl><Input {...field} placeholder="recipient@domain.com" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField name="subject" control={customForm.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subject</FormLabel>
+                  <FormControl><Input {...field} placeholder="Invitation Subject" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField name="message" control={customForm.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message (optional)</FormLabel>
+                  <FormControl><Textarea {...field} rows={4} placeholder="Custom message..." /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setShowCustomDialog(false)}>Cancel</Button>
+                <Button type="submit" disabled={sendCustom.isPending}>Send</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
