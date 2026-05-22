@@ -411,7 +411,7 @@ export default function EventDetailPage() {
       Join Meeting
     </Button>
   )}
-}
+
 
                       {/* End Meeting Button (Organizer/Admin) */}
                       {(isOwner || role === 'admin') && event.meeting_status === 'live' && (
