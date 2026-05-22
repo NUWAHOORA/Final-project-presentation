@@ -386,19 +386,32 @@ export default function EventDetailPage() {
                         </Button>
                       )}
 
+  {/* Join Meeting Button for Organizer/Admin when live */}
+  {(isOwner || role === 'admin') && event.meeting_status === 'live' && (
+    <Button
+      onClick={() => {
+        if (event.meeting_link) window.open(event.meeting_link, '_blank');
+      }}
+      className="gradient-success text-white"
+    >
+      <ExternalLink className="w-4 h-4 mr-2" />
+      Join Meeting
+    </Button>
+  )}
 
-                      {/* Join Meeting Button (Participants) */}
-                      {((isOwner || role === 'admin') ? event.meeting_status === 'live' : (isRegistered && (event.meeting_status === 'live' || event.meeting_status === 'scheduled'))) && (
-                        <Button
-                          onClick={() => {
-                            if (event.meeting_link) window.open(event.meeting_link, '_blank');
-                          }}
-                          className="gradient-success text-white"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Join Meeting
-                        </Button>
-                      )}
+  {/* Join Meeting Button for Registered Participants when live or scheduled */}
+  {!(isOwner || role === 'admin') && isRegistered && (event.meeting_status === 'live' || event.meeting_status === 'scheduled') && (
+    <Button
+      onClick={() => {
+        if (event.meeting_link) window.open(event.meeting_link, '_blank');
+      }}
+      className="gradient-success text-white"
+    >
+      <ExternalLink className="w-4 h-4 mr-2" />
+      Join Meeting
+    </Button>
+  )}
+}
 
                       {/* End Meeting Button (Organizer/Admin) */}
                       {(isOwner || role === 'admin') && event.meeting_status === 'live' && (
