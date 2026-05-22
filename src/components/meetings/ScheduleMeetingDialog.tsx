@@ -34,6 +34,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCreateMeeting } from '@/hooks/useMeetings';
 import { supabase } from '@/integrations/supabase/client';
 
+// Constant meeting link used for all scheduled meetings (unchangeable)
+const DEFAULT_MEETING_LINK = "https://zoom.us/j/1234567890";
+
 const meetingSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
@@ -75,7 +78,7 @@ export function ScheduleMeetingDialog({
     defaultValues: {
       title: `Planning Meeting - ${eventTitle}`,
       description: '',
-      meeting_link: '',
+      meeting_link: DEFAULT_MEETING_LINK,
       meeting_date: '',
       meeting_time: '10:00',
       duration_minutes: 60,
@@ -184,7 +187,8 @@ export function ScheduleMeetingDialog({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                          readOnly
+                          className="bg-muted text-muted-foreground cursor-not-allowed"
                           {...field}
                         />
                       </FormControl>
