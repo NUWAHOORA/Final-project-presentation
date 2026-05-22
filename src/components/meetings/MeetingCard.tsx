@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { format, parseISO, isToday, isTomorrow, isPast, isValid } from 'date-fns';
+import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
 import {
   Video,
   Calendar,
@@ -55,18 +55,13 @@ export function MeetingCard({
   showEventTitle = true,
 }: MeetingCardProps) {
   const { user, role } = useAuth();
-  const meetingDateStr = meeting.meeting_date || '';
-  const meetingDate = parseISO(meetingDateStr);
-  const isValidDate = isValid(meetingDate);
-  const isPastMeeting = isValidDate && isPast(meetingDate) && !isToday(meetingDate);
-  const isTodayMeeting = isValidDate && isToday(meetingDate);
-  const isTomorrowMeeting = isValidDate && isTomorrow(meetingDate);
-  const canManage = user?.id === meeting.created_by || role === 'admin' || role === 'organizer';
+  const meetingDate = parseISO(meeting.meeting_date);
+  const isPastMeeting = isPast(meetingDate) && !isToday(meetingDate);
+  const canManage = user?.id === meeting.created_by || role === 'admin';
 
   const getDateLabel = () => {
-    if (!isValidDate) return 'Date TBA';
-    if (isTodayMeeting) return 'Today';
-    if (isTomorrowMeeting) return 'Tomorrow';
+    if (isToday(meetingDate)) return 'Today';
+    if (isTomorrow(meetingDate)) return 'Tomorrow';
     return format(meetingDate, 'EEE, MMM d');
   };
 
@@ -97,9 +92,9 @@ export function MeetingCard({
       )}>
         <div className={cn(
           "h-1",
-          isTodayMeeting ? "bg-success" : isPastMeeting ? "bg-muted" : "bg-primary"
+          isToday(meetingDate) ? "bg-success" : isPastMeeting ? "bg-muted" : "bg-primary"
         )} />
-        
+
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -114,7 +109,7 @@ export function MeetingCard({
               )}
             </div>
             <div className="flex items-center gap-1">
-              {isTodayMeeting && !isPastMeeting && (
+              {isToday(meetingDate) && !isPastMeeting && (
                 <Badge className="bg-success text-success-foreground">
                   Today
                 </Badge>
@@ -122,7 +117,7 @@ export function MeetingCard({
               {participantStatus && (
                 <Badge variant={
                   participantStatus === 'accepted' ? 'default' :
-                  participantStatus === 'declined' ? 'destructive' : 'secondary'
+                    participantStatus === 'declined' ? 'destructive' : 'secondary'
                 }>
                   {participantStatus}
                 </Badge>
