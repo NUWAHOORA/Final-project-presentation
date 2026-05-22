@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Video, Plus, Loader2 } from 'lucide-react';
+import { Video, Plus, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MeetingCard } from './MeetingCard';
 import { ScheduleMeetingDialog } from './ScheduleMeetingDialog';
 import { useMeetings, useDeleteMeeting, useMarkAttendance } from '@/hooks/useMeetings';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSendCustomMessage } from '@/hooks/useInvitations';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface EventMeetingsSectionProps {
   eventId: string;
@@ -19,12 +27,31 @@ export function EventMeetingsSection({
   isOrganizer,
 }: EventMeetingsSectionProps) {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
   const { role } = useAuth();
   const { data: meetings, isLoading } = useMeetings(eventId);
   const deleteMeeting = useDeleteMeeting();
   const markAttendance = useMarkAttendance();
+  const sendCustom = useSendCustomMessage();
 
   const canSchedule = isOrganizer || role === 'admin';
+  const openCustomDialog = () => setShowCustomDialog(true);
+  const closeCustomDialog = () => setShowCustomDialog(false);
+
+  const customForm = useForm({
+    resolver: zodResolver(z.object({
+      senderEmail: z.string().email('Invalid email'),
+      recipientEmail: z.string().email('Invalid email'),
+      subject: z.string().min(1, 'Subject required'),
+      message: z.string().optional(),
+    })),
+    defaultValues: {
+      senderEmail: '',
+      recipientEmail: '',
+      subject: '',
+      message: '',
+    },
+  });
 
   const handleJoin = (meetingId: string, link: string) => {
     markAttendance.mutate({ meetingId, action: 'join' });
@@ -61,10 +88,18 @@ export function EventMeetingsSection({
         </div>
 
         {canSchedule && (
-          <Button size="sm" onClick={() => setShowScheduleDialog(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            Schedule
-          </Button>
+      {canSchedule && (
+        <Button size="sm" onClick={() => setShowScheduleDialog(true)}>
+          <Plus className="w-4 h-4 mr-1" />
+          Schedule
+        </Button>
+      )}
+      {canSchedule && (
+        <Button size="sm" variant="outline" onClick={openCustomDialog} className="ml-2">
+          <Send className="w-4 h-4 mr-1" />
+          Send Custom Email
+        </Button>
+      )}
         )}
       </div>
 
