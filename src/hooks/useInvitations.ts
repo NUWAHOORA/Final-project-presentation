@@ -246,33 +246,7 @@ export function useUpdateInvitationStatus() {
 }
 
 /** Delete a single invitation. */
-  /** Send a custom email message for an event. */
-  export function useSendCustomMessage() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (payload: { senderEmail: string; recipientEmail: string; subject: string; message: string; event_id?: string }) => {
-        const emailBody: Record<string, any> = {
-          notification_type: 'custom_message',
-          sender_email: payload.senderEmail,
-          recipient_email: payload.recipientEmail,
-          subject: payload.subject,
-          message: payload.message,
-        };
-        if (payload.event_id) emailBody.event_id = payload.event_id;
-        const { error } = await supabase.functions.invoke('send-email-notification', { body: emailBody });
-        if (error) throw error;
-      },
-      onSuccess: () => {
-        toast.success('Message sent successfully');
-        queryClient.invalidateQueries({ queryKey: ['invitations'] });
-      },
-      onError: (err: Error) => {
-        toast.error(err.message || 'Failed to send message');
-      },
-    });
-  }
-
+export function useDeleteInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -290,6 +264,33 @@ export function useUpdateInvitationStatus() {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to delete invitation');
+    },
+  });
+}
+
+/** Send a custom email message for an event. */
+export function useSendCustomMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { senderEmail: string; recipientEmail: string; subject: string; message: string; event_id?: string }) => {
+      const emailBody: Record<string, any> = {
+        notification_type: 'custom_message',
+        sender_email: payload.senderEmail,
+        recipient_email: payload.recipientEmail,
+        subject: payload.subject,
+        message: payload.message,
+      };
+      if (payload.event_id) emailBody.event_id = payload.event_id;
+      const { error } = await supabase.functions.invoke('send-email-notification', { body: emailBody });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Message sent successfully');
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to send message');
     },
   });
 }
